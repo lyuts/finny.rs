@@ -1,16 +1,13 @@
-use syn::{Expr, ExprMethodCall, MethodTurbofish, spanned::Spanned};
+use syn::{spanned::Spanned, Expr, ExprMethodCall, MethodTurbofish};
 
 use crate::parse::FsmFnBase;
 
-
 #[derive(Debug)]
 pub enum FsmBlock {
-    MethodCall(FsmBlockMethodCall)
+    MethodCall(FsmBlockMethodCall),
 }
 #[derive(Debug)]
-pub struct FsmBlockStruct {
-
-}
+pub struct FsmBlockStruct {}
 
 pub fn decode_blocks(base: &FsmFnBase, item_fn: &syn::ItemFn) -> syn::Result<Vec<FsmBlock>> {
     let mut ret = vec![];
@@ -34,28 +31,33 @@ pub fn decode_blocks(base: &FsmFnBase, item_fn: &syn::ItemFn) -> syn::Result<Vec
     Ok(ret)
 }
 
-
 #[derive(Debug)]
 pub struct FsmBlockMethodCall {
     pub expr_call: ExprMethodCall,
-    pub method_calls: Vec<ExprMethodCall>
+    pub method_calls: Vec<ExprMethodCall>,
 }
 
 pub fn decode_method_call(base: &FsmFnBase, expr: &Expr) -> syn::Result<FsmBlockMethodCall> {
     // verify if the receiver is our builder
     let mc = match expr {
         Expr::MethodCall(mc) => Ok(mc),
-        _ => Err(syn::Error::new(expr.span(), "Unsupported expression. Only calls on the builder are allowed."))
+        _ => Err(syn::Error::new(
+            expr.span(),
+            "Unsupported expression. Only calls on the builder are allowed.",
+        )),
     }?;
 
     let receiver_ident = get_method_receiver_ident(&mc.receiver)?;
     if receiver_ident != &base.builder_ident {
-        return Err(syn::Error::new(receiver_ident.span(), "Only method calls referring to the FSM builder are allowed!"));
+        return Err(syn::Error::new(
+            receiver_ident.span(),
+            "Only method calls referring to the FSM builder are allowed!",
+        ));
     }
 
     Ok(FsmBlockMethodCall {
         expr_call: mc.clone(),
-        method_calls: flatten_method_calls(&mc)?
+        method_calls: flatten_method_calls(&mc)?,
     })
 }
 
@@ -63,16 +65,20 @@ pub fn get_method_receiver_ident(expr: &Expr) -> syn::Result<&syn::Ident> {
     let path = match expr {
         Expr::MethodCall(call) => {
             return get_method_receiver_ident(&call.receiver);
-        },
-        Expr::Path(ep) => Ok(ep),
-        _ => {
-            Err(syn::Error::new(expr.span(), "Expected a simple method receiver!"))
         }
+        Expr::Path(ep) => Ok(ep),
+        _ => Err(syn::Error::new(
+            expr.span(),
+            "Expected a simple method receiver!",
+        )),
     }?;
 
     let segment = match (path.path.segments.len(), path.path.segments.first()) {
         (1, Some(segment)) => Ok(segment),
-        (_, _) => Err(syn::Error::new(path.path.segments.span(), "Expected a single segment"))
+        (_, _) => Err(syn::Error::new(
+            path.path.segments.span(),
+            "Expected a single segment",
+        )),
     }?;
 
     Ok(&segment.ident)
@@ -89,8 +95,12 @@ pub fn flatten_method_calls(mc: &ExprMethodCall) -> syn::Result<Vec<ExprMethodCa
                 ret.push(ex.clone());
                 t = &ex.receiver;
             }
-            Expr::Path(_) => { break; }
-            _ => { return Err(syn::Error::new(mc.receiver.span(), "Unsupported.")); }
+            Expr::Path(_) => {
+                break;
+            }
+            _ => {
+                return Err(syn::Error::new(mc.receiver.span(), "Unsupported."));
+            }
         }
     }
 
@@ -104,8 +114,12 @@ pub fn get_generics(turbofish: &Option<MethodTurbofish>) -> syn::Result<Vec<syn:
     if let Some(turbofish) = turbofish {
         for arg in &turbofish.args {
             match arg {
-                syn::GenericMethodArgument::Type(ty) => { ret.push(ty.clone()); },
-                _ => { return Err(syn::Error::new(arg.span(), "Unsupported.")); }
+                syn::GenericMethodArgument::Type(ty) => {
+                    ret.push(ty.clone());
+                }
+                _ => {
+                    return Err(syn::Error::new(arg.span(), "Unsupported."));
+                }
             }
         }
     }

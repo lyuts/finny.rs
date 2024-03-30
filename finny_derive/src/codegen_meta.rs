@@ -1,22 +1,34 @@
-
 use proc_macro2::TokenStream;
 
-use crate::{meta::{
+use crate::parse::FsmFnInput;
+#[cfg(feature = "generate_plantuml")]
+use crate::{
+    meta::{
         FinnyEvent, FinnyFsm, FinnyRegion, FinnyState, FinnyStateKind, FinnyTimer, FinnyTransition,
         FinnyTransitionKind, FinnyTransitionNormal,
-    }, parse::{FsmFnInput, FsmState, FsmStateKind, FsmTransitionState}, utils::{strip_generics, tokens_to_string}};
+    },
+    parse::{FsmState, FsmStateKind, FsmTransitionState},
+    utils::{strip_generics, tokens_to_string},
+};
 use quote::quote;
 
+#[cfg(feature = "generate_plantuml")]
 fn ty_to_string(ty: &syn::Type) -> String {
     let ty = ty.clone();
     let ty = strip_generics(ty);
     tokens_to_string(&ty)
 }
 
+#[cfg(feature = "generate_plantuml")]
 fn to_info_state(s: &FsmTransitionState, fsm: &FsmFnInput) -> FinnyStateKind {
     match s {
         FsmTransitionState::None => FinnyStateKind::Stopped,
-        FsmTransitionState::State(s @ FsmState { kind: FsmStateKind::Normal, .. }) => FinnyStateKind::State(FinnyState {
+        FsmTransitionState::State(
+            s @ FsmState {
+                kind: FsmStateKind::Normal,
+                ..
+            },
+        ) => FinnyStateKind::State(FinnyState {
             state_id: ty_to_string(&s.ty),
             timers: s
                 .timers
@@ -26,10 +38,16 @@ fn to_info_state(s: &FsmTransitionState, fsm: &FsmFnInput) -> FinnyStateKind {
                 })
                 .collect(),
         }),
-        FsmTransitionState::State(s @ FsmState { kind: FsmStateKind::SubMachine(_), .. }) => FinnyStateKind::SubMachine(ty_to_string(&s.ty))
+        FsmTransitionState::State(
+            s @ FsmState {
+                kind: FsmStateKind::SubMachine(_),
+                ..
+            },
+        ) => FinnyStateKind::SubMachine(ty_to_string(&s.ty)),
     }
 }
 
+#[cfg(feature = "generate_plantuml")]
 fn to_info(fsm: &FsmFnInput) -> FinnyFsm {
     let stopped_state = FinnyStateKind::Stopped;
 
@@ -67,13 +85,19 @@ fn to_info(fsm: &FsmFnInput) -> FinnyFsm {
                                         ref internal,
                                     ) => (
                                         internal.event.clone(),
-                                        FinnyTransitionKind::InternalTransition { state_id: to_info_state(&internal.state, fsm).get_state_id() },
+                                        FinnyTransitionKind::InternalTransition {
+                                            state_id: to_info_state(&internal.state, fsm)
+                                                .get_state_id(),
+                                        },
                                     ),
                                     crate::parse::FsmTransitionType::SelfTransition(
                                         ref self_transition,
                                     ) => (
                                         self_transition.event.clone(),
-                                        FinnyTransitionKind::SelfTransition { state_id: to_info_state(&self_transition.state, fsm).get_state_id() },
+                                        FinnyTransitionKind::SelfTransition {
+                                            state_id: to_info_state(&self_transition.state, fsm)
+                                                .get_state_id(),
+                                        },
                                     ),
                                     crate::parse::FsmTransitionType::StateTransition(ref st) => (
                                         st.event.clone(),
@@ -116,26 +140,35 @@ fn to_info(fsm: &FsmFnInput) -> FinnyFsm {
 }
 
 pub fn generate_fsm_meta(fsm: &FsmFnInput) -> TokenStream {
+    #[cfg(feature = "generate_plantuml")]
     let info = to_info(fsm);
 
     //let json = serde_json::to_string_pretty(&info).expect("Failed to serialize the FSM info JSON!");
 
+    #[cfg(feature = "generate_plantuml")]
     let fsm_ty = &fsm.base.fsm_ty;
+    #[cfg(feature = "generate_plantuml")]
     let fsm_ty_name = tokens_to_string(&strip_generics(fsm_ty.clone()));
+    #[cfg(feature = "generate_plantuml")]
     let fsm_info_ty = &fsm.base.fsm_info_ty;
+    #[cfg(feature = "generate_plantuml")]
     let fsm_ty_name_snake = crate::utils::to_snake_case(&tokens_to_string(&fsm_ty));
-    let (fsm_generics_impl, fsm_generics_type, fsm_generics_where) =
+    let (_fsm_generics_impl, _fsm_generics_type, _fsm_generics_where) =
         fsm.base.fsm_generics.split_for_impl();
 
     let plant_uml_test_build = {
-        #[cfg(not(feature="generate_plantuml"))]
-        { TokenStream::new() }
-        #[cfg(feature="generate_plantuml")]
+        #[cfg(not(feature = "generate_plantuml"))]
         {
-            let (plant_uml_str, additional) = crate::meta::plantuml::to_plant_uml(&info).expect("PlantUML syntax generation error!");
+            TokenStream::new()
+        }
+        #[cfg(feature = "generate_plantuml")]
+        {
+            let (plant_uml_str, additional) = crate::meta::plantuml::to_plant_uml(&info)
+                .expect("PlantUML syntax generation error!");
 
-            let test_fn_name = crate::utils::to_field_name(&crate::utils::ty_append(&fsm_ty, "_plantuml"));
-            
+            let test_fn_name =
+                crate::utils::to_field_name(&crate::utils::ty_append(&fsm_ty, "_plantuml"));
+
             quote! {
                 #[test]
                 #[cfg(test)]
@@ -163,6 +196,7 @@ pub fn generate_fsm_meta(fsm: &FsmFnInput) -> TokenStream {
                         output
                     }
 
+                    #[cfg(feature = "generate_plantuml")]
                     pub fn plantuml() -> String {
                         use std::fmt::Write;
 
@@ -180,11 +214,6 @@ pub fn generate_fsm_meta(fsm: &FsmFnInput) -> TokenStream {
             }
         }
     };
-
-    
-    
-
-
 
     /*
     quote! {

@@ -20,14 +20,13 @@ mod queue_vec {
 
     /// An unbound event queue that uses `VecDeque`.
     pub struct FsmEventQueueVec<F: FsmBackend> {
-        queue: VecDeque<<F as FsmBackend>::Events>
+        queue: VecDeque<<F as FsmBackend>::Events>,
     }
 
-    
     impl<F: FsmBackend> FsmEventQueueVec<F> {
         pub fn new() -> Self {
             FsmEventQueueVec {
-                queue: VecDeque::new()
+                queue: VecDeque::new(),
             }
         }
     }
@@ -63,28 +62,33 @@ mod queue_vec_shared {
 
     /// An unbound event queue that uses `VecDeque`.
     pub struct FsmEventQueueVecShared<F: FsmBackend> {
-        inner: Inner<F>
+        inner: Inner<F>,
     }
 
-    impl<F> Clone for FsmEventQueueVecShared<F> where F: FsmBackend {
+    impl<F> Clone for FsmEventQueueVecShared<F>
+    where
+        F: FsmBackend,
+    {
         fn clone(&self) -> Self {
-            Self { inner: Inner { queue: self.inner.queue.clone() } }
+            Self {
+                inner: Inner {
+                    queue: self.inner.queue.clone(),
+                },
+            }
         }
     }
 
     struct Inner<F: FsmBackend> {
-        queue: Arc<Mutex<VecDeque<<F as FsmBackend>::Events>>>
+        queue: Arc<Mutex<VecDeque<<F as FsmBackend>::Events>>>,
     }
-    
+
     impl<F: FsmBackend> FsmEventQueueVecShared<F> {
         pub fn new() -> Self {
             let q = VecDeque::new();
             let inner = Inner {
-                queue: Arc::new(Mutex::new(q))
+                queue: Arc::new(Mutex::new(q)),
             };
-            FsmEventQueueVecShared {
-                inner
-            }
+            FsmEventQueueVecShared { inner }
         }
     }
 
@@ -128,25 +132,32 @@ mod queue_array {
 
     /// A heapless queue with a fixed size. Implemented using the `arraydequeue` crate.
     pub struct FsmEventQueueArray<F, A>
-        where F: FsmBackend, A: Array<Item = <F as FsmBackend>::Events>, Self: Sized
+    where
+        F: FsmBackend,
+        A: Array<Item = <F as FsmBackend>::Events>,
+        Self: Sized,
     {
         dequeue: ArrayDeque<A>,
-        _fsm: PhantomData<F>
+        _fsm: PhantomData<F>,
     }
 
     impl<F, A> FsmEventQueueArray<F, A>
-        where F: FsmBackend, A: Array<Item = <F as FsmBackend>::Events>
+    where
+        F: FsmBackend,
+        A: Array<Item = <F as FsmBackend>::Events>,
     {
         pub fn new() -> Self {
             Self {
                 dequeue: ArrayDeque::new(),
-                _fsm: PhantomData::default()
+                _fsm: PhantomData::default(),
             }
         }
     }
 
-    impl<F, A> FsmEventQueue<F> for FsmEventQueueArray<F, A> 
-        where F: FsmBackend, A: Array<Item = <F as FsmBackend>::Events>
+    impl<F, A> FsmEventQueue<F> for FsmEventQueueArray<F, A>
+    where
+        F: FsmBackend,
+        A: Array<Item = <F as FsmBackend>::Events>,
     {
         fn dequeue(&mut self) -> Option<<F as FsmBackend>::Events> {
             self.dequeue.pop_front()
@@ -157,13 +168,15 @@ mod queue_array {
         }
     }
 
-    impl<F, A> FsmEventQueueSender<F> for FsmEventQueueArray<F, A> 
-        where F: FsmBackend, A: Array<Item = <F as FsmBackend>::Events>
+    impl<F, A> FsmEventQueueSender<F> for FsmEventQueueArray<F, A>
+    where
+        F: FsmBackend,
+        A: Array<Item = <F as FsmBackend>::Events>,
     {
         fn enqueue<E: Into<<F as FsmBackend>::Events>>(&mut self, event: E) -> FsmResult<()> {
             match self.dequeue.push_back(event.into()) {
                 Ok(_) => Ok(()),
-                Err(_) => Err(crate::FsmError::QueueOverCapacity)
+                Err(_) => Err(crate::FsmError::QueueOverCapacity),
             }
         }
     }
@@ -171,10 +184,9 @@ mod queue_array {
 
 pub use self::queue_array::*;
 
-
 pub mod heapless_shared {
     //! A heapless queue with Clone and Arc support.
-    
+
     use core::sync::atomic::{AtomicUsize, Ordering};
 
     use crate::FsmError;
@@ -185,31 +197,36 @@ pub mod heapless_shared {
     use alloc::sync::Arc;
     use heapless::mpmc::Q64;
 
-/// An unbound event queue that uses `VecDeque`.
+    /// An unbound event queue that uses `VecDeque`.
     pub struct FsmEventQueueHeaplessShared<F: FsmBackend> {
-        inner: Arc<Inner<F>>
+        inner: Arc<Inner<F>>,
     }
 
-    impl<F> Clone for FsmEventQueueHeaplessShared<F> where F: FsmBackend {
+    impl<F> Clone for FsmEventQueueHeaplessShared<F>
+    where
+        F: FsmBackend,
+    {
         fn clone(&self) -> Self {
-            Self { inner: self.inner.clone() }
+            Self {
+                inner: self.inner.clone(),
+            }
         }
     }
 
     struct Inner<F: FsmBackend> {
         queue: Q64<<F as FsmBackend>::Events>,
-        len: AtomicUsize
+        len: AtomicUsize,
     }
-    
+
     impl<F: FsmBackend> FsmEventQueueHeaplessShared<F> {
         pub fn new() -> Self {
             let q = Q64::new();
             let inner = Inner {
                 queue: q,
-                len: AtomicUsize::new(0)
+                len: AtomicUsize::new(0),
             };
             FsmEventQueueHeaplessShared {
-                inner: Arc::new(inner)
+                inner: Arc::new(inner),
             }
         }
     }
@@ -220,8 +237,8 @@ pub mod heapless_shared {
                 Some(e) => {
                     self.inner.len.fetch_sub(1, Ordering::SeqCst);
                     Some(e)
-                },
-                None => None
+                }
+                None => None,
             }
         }
 
@@ -236,21 +253,22 @@ pub mod heapless_shared {
                 Ok(_) => {
                     self.inner.len.fetch_add(1, Ordering::SeqCst);
                     Ok(())
-                },
-                Err(_) => Err(FsmError::QueueOverCapacity) 
+                }
+                Err(_) => Err(FsmError::QueueOverCapacity),
             }
         }
     }
-
 }
 
 pub struct FsmEventQueueNull<F> {
-    _ty: PhantomData<F>
+    _ty: PhantomData<F>,
 }
 
 impl<F> FsmEventQueueNull<F> {
     pub fn new() -> Self {
-        FsmEventQueueNull { _ty: PhantomData::default() }
+        FsmEventQueueNull {
+            _ty: PhantomData::default(),
+        }
     }
 }
 
@@ -271,21 +289,21 @@ impl<F: FsmBackend> FsmEventQueueSender<F> for FsmEventQueueNull<F> {
 }
 
 pub struct FsmEventQueueSub<'a, Q, F, FSub>
-    where 
-        F: FsmBackend,
-        Q: FsmEventQueueSender<F>
+where
+    F: FsmBackend,
+    Q: FsmEventQueueSender<F>,
 {
     pub parent: &'a mut Q,
     pub _parent_fsm: PhantomData<F>,
-    pub _sub_fsm: PhantomData<FSub>
+    pub _sub_fsm: PhantomData<FSub>,
 }
 
 impl<'a, Q, F, FSub> FsmEventQueue<FSub> for FsmEventQueueSub<'a, Q, F, FSub>
-    where 
-        F: FsmBackend,
-        Q: FsmEventQueueSender<F>,
-        FSub: FsmBackend,
-        <F as FsmBackend>::Events: From<<FSub as FsmBackend>::Events>
+where
+    F: FsmBackend,
+    Q: FsmEventQueueSender<F>,
+    FSub: FsmBackend,
+    <F as FsmBackend>::Events: From<<FSub as FsmBackend>::Events>,
 {
     fn dequeue(&mut self) -> Option<<FSub as FsmBackend>::Events> {
         None
@@ -297,26 +315,22 @@ impl<'a, Q, F, FSub> FsmEventQueue<FSub> for FsmEventQueueSub<'a, Q, F, FSub>
 }
 
 impl<'a, Q, F, FSub> FsmEventQueueSender<FSub> for FsmEventQueueSub<'a, Q, F, FSub>
-    where 
-        F: FsmBackend,
-        Q: FsmEventQueueSender<F>,
-        FSub: FsmBackend,
-        <F as FsmBackend>::Events: From<<FSub as FsmBackend>::Events>
+where
+    F: FsmBackend,
+    Q: FsmEventQueueSender<F>,
+    FSub: FsmBackend,
+    <F as FsmBackend>::Events: From<<FSub as FsmBackend>::Events>,
 {
-    fn enqueue<E: Into<<FSub as FsmBackend>::Events>>(&mut self, event: E) -> FsmResult<()>
-    {
+    fn enqueue<E: Into<<FSub as FsmBackend>::Events>>(&mut self, event: E) -> FsmResult<()> {
         self.parent.enqueue(event.into())
     }
 }
-
-
 
 #[cfg(test)]
 use super::tests_fsm::TestFsm;
 
 #[test]
 fn test_dequeue_vec() {
-    
     let queue = FsmEventQueueVec::<TestFsm>::new();
     test_queue(queue);
 }
@@ -342,21 +356,21 @@ fn test_heapless_shared() {
 
 #[cfg(test)]
 fn test_queue<Q: FsmEventQueue<TestFsm>>(mut queue: Q) {
-    use super::tests_fsm::{Events, EventA};
+    use super::tests_fsm::{EventA, Events};
 
     // fill and drain
     {
         for i in 0..5 {
             assert_eq!(i, queue.len());
-            queue.enqueue(EventA { n: i }).unwrap();            
-            assert_eq!(i+1, queue.len());
+            queue.enqueue(EventA { n: i }).unwrap();
+            assert_eq!(i + 1, queue.len());
         }
 
         for i in 0..5 {
-            assert_eq!(5-i, queue.len());
+            assert_eq!(5 - i, queue.len());
             let ev = queue.dequeue().unwrap();
-            assert_eq!(Events::EventA(EventA { n: i }), ev);            
-            assert_eq!(5-i-1, queue.len());
+            assert_eq!(Events::EventA(EventA { n: i }), ev);
+            assert_eq!(5 - i - 1, queue.len());
         }
     }
     assert_eq!(None, queue.dequeue());

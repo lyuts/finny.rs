@@ -7,21 +7,23 @@ extern crate finny;
 #[derive(Debug, Default)]
 pub struct StateMachineContext {
     count: usize,
-    total_time: usize
+    total_time: usize,
 }
 
 #[derive(Default)]
 pub struct StateA {
     enter: usize,
-    exit: usize
+    exit: usize,
 }
 #[derive(Default)]
 pub struct StateB {
-    counter: usize
+    counter: usize,
 }
 
 #[derive(Clone)]
-pub struct EventClick { time: usize }
+pub struct EventClick {
+    time: usize,
+}
 #[derive(Clone)]
 pub struct EventEnter;
 
@@ -40,17 +42,14 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, StateMachineContext>) -> BuiltFsm
         })
         .on_event::<EventClick>()
         .transition_to::<StateB>()
-        .guard(|ev, _ctx, _states| {
-            ev.time > 100
-        })
+        .guard(|ev, _ctx, _states| ev.time > 100)
         .action(|ev, ctx, _state_from, _state_to| {
             ctx.context.total_time += ev.time;
         });
 
-    fsm.state::<StateB>()
-        .on_entry(|state_b, _ctx| {
-            state_b.counter += 1;
-        });
-        
+    fsm.state::<StateB>().on_entry(|state_b, _ctx| {
+        state_b.counter += 1;
+    });
+
     fsm.build()
 }

@@ -1,31 +1,40 @@
-use crate::{AllVariants, DispatchContext, FsmError, FsmEvent, FsmEventQueue, Inspect, lib::*};
+use crate::{lib::*, AllVariants, DispatchContext, FsmError, FsmEvent, FsmEventQueue, Inspect};
 use crate::{FsmBackend, FsmResult};
 
 /// Associate some data with a specific timer ID.
-pub trait TimersStorage<FT, T> : Default
-    where FT: AllVariants
+pub trait TimersStorage<FT, T>: Default
+where
+    FT: AllVariants,
 {
     fn get_timer_storage_mut(&mut self, id: &FT) -> &mut Option<T>;
 }
 
-
 pub struct TimerInstance<F>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
     pub id: <F as FsmBackend>::Timers,
-    pub settings: TimerFsmSettings
+    pub settings: TimerFsmSettings,
 }
 
 pub trait FsmTimer<F, S>
-    where F: FsmBackend, Self: Default
+where
+    F: FsmBackend,
+    Self: Default,
 {
     fn setup(ctx: &mut <F as FsmBackend>::Context, settings: &mut TimerFsmSettings);
-    fn trigger(ctx: &<F as FsmBackend>::Context, state: &S) -> Option< <F as FsmBackend>::Events >;
+    fn trigger(ctx: &<F as FsmBackend>::Context, state: &S) -> Option<<F as FsmBackend>::Events>;
 
     fn get_instance(&self) -> &Option<TimerInstance<F>>;
     fn get_instance_mut(&mut self) -> &mut Option<TimerInstance<F>>;
 
-    fn execute_on_enter<I: Inspect, T: FsmTimers<F>>(&mut self, id: F::Timers, ctx: &mut <F as FsmBackend>::Context, inspect: &mut I, timers: &mut T) {
+    fn execute_on_enter<I: Inspect, T: FsmTimers<F>>(
+        &mut self,
+        id: F::Timers,
+        ctx: &mut <F as FsmBackend>::Context,
+        inspect: &mut I,
+        timers: &mut T,
+    ) {
         let log = inspect.for_timer::<F>(id.clone());
         let mut settings = TimerFsmSettings::default();
         Self::setup(ctx, &mut settings);
@@ -33,9 +42,9 @@ pub trait FsmTimer<F, S>
             match timers.create(id.clone(), &settings.to_timer_settings()) {
                 Ok(_) => {
                     let instance = self.get_instance_mut();
-                    *instance = Some( TimerInstance { id, settings } );
+                    *instance = Some(TimerInstance { id, settings });
                     log.info("Started the timer.");
-                },
+                }
                 Err(ref e) => {
                     log.on_error("Failed to create a timer", e);
                 }
@@ -45,7 +54,12 @@ pub trait FsmTimer<F, S>
         }
     }
 
-    fn execute_on_exit<I: Inspect, T: FsmTimers<F>>(&mut self, id: F::Timers, inspect: &mut I, timers: &mut T) {
+    fn execute_on_exit<I: Inspect, T: FsmTimers<F>>(
+        &mut self,
+        id: F::Timers,
+        inspect: &mut I,
+        timers: &mut T,
+    ) {
         let log = inspect.for_timer::<F>(id.clone());
         match self.get_instance_mut() {
             Some(instance) => {
@@ -54,45 +68,51 @@ pub trait FsmTimer<F, S>
                         Ok(_) => {
                             *self.get_instance_mut() = None;
                             log.info("Cancelled the timer.");
-                        },
+                        }
                         Err(ref e) => {
                             log.on_error("Failed to cancel the timer", e);
                         }
                     }
                 }
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
 
-    fn execute_trigger<'a, 'b, 'c, 'd, Q, I, T>(id: F::Timers, context: &'d mut DispatchContext<'a, 'b, 'c, F, Q, I, T>, inspect: &mut I)
-        where 
-            Q: FsmEventQueue<F>,
-            I: Inspect,
-            <F as FsmBackend>::States: AsRef<S>,
-            <F as FsmBackend>::States: AsRef<Self>,
-            T: FsmTimers<F>
+    fn execute_trigger<'a, 'b, 'c, 'd, Q, I, T>(
+        id: F::Timers,
+        context: &'d mut DispatchContext<'a, 'b, 'c, F, Q, I, T>,
+        inspect: &mut I,
+    ) where
+        Q: FsmEventQueue<F>,
+        I: Inspect,
+        <F as FsmBackend>::States: AsRef<S>,
+        <F as FsmBackend>::States: AsRef<Self>,
+        T: FsmTimers<F>,
     {
         let inspect = inspect.for_timer::<F>(id);
         let timer: &Self = context.backend.states.as_ref();
         match timer.get_instance() {
-            Some(_) => {                
+            Some(_) => {
                 match Self::trigger(&context.backend.context, context.backend.states.as_ref()) {
                     Some(ev) => {
-                        let inspect = inspect.new_event::<F>(&FsmEvent::Event(ev.clone()), &context.backend);
+                        let inspect =
+                            inspect.new_event::<F>(&FsmEvent::Event(ev.clone()), &context.backend);
                         match context.queue.enqueue(ev) {
                             Ok(_) => {
                                 inspect.info("The event triggered by the timer was enqueued.");
-                            },
+                            }
                             Err(e) => {
-                                inspect.on_error("The event triggered by the timer couldn't be enqueued.", &e);
+                                inspect.on_error(
+                                    "The event triggered by the timer couldn't be enqueued.",
+                                    &e,
+                                );
                             }
                         }
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
-
-            },
+            }
             None => {
                 let error = FsmError::TimerNotStarted;
                 inspect.on_error("Timer hasn't been started.", &error);
@@ -106,7 +126,7 @@ pub struct TimerFsmSettings {
     pub enabled: bool,
     pub timeout: Duration,
     pub renew: bool,
-    pub cancel_on_state_exit: bool
+    pub cancel_on_state_exit: bool,
 }
 
 impl TimerFsmSettings {
@@ -114,7 +134,7 @@ impl TimerFsmSettings {
         TimerSettings {
             enabled: self.enabled,
             timeout: self.timeout,
-            renew: self.renew
+            renew: self.renew,
         }
     }
 }
@@ -125,44 +145,47 @@ impl Default for TimerFsmSettings {
             enabled: true,
             timeout: Duration::from_secs(1),
             renew: false,
-            cancel_on_state_exit: true
+            cancel_on_state_exit: true,
         }
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub struct TimerSettings
-{
+pub struct TimerSettings {
     pub enabled: bool,
     pub timeout: Duration,
-    pub renew: bool
+    pub renew: bool,
 }
 
 pub trait FsmTimers<F>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
     fn create(&mut self, id: <F as FsmBackend>::Timers, settings: &TimerSettings) -> FsmResult<()>;
     fn cancel(&mut self, id: <F as FsmBackend>::Timers) -> FsmResult<()>;
-    
+
     /// Return the timer that was triggered. Poll this until it returns None. The events
     /// should be dequeued in a FIFO manner.
     fn get_triggered_timer(&mut self) -> Option<<F as FsmBackend>::Timers>;
 }
 
-
 #[derive(Debug, Copy, Clone)]
 pub struct FsmTimersTriggerEventsResult {
-    pub triggered_events: usize
+    pub triggered_events: usize,
 }
 
 #[derive(Debug, Default, Copy, Clone)]
 pub struct FsmTimersNull;
 
 impl<F> FsmTimers<F> for FsmTimersNull
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
-    fn create(&mut self, _id: <F as FsmBackend>::Timers, _settings: &TimerSettings) -> FsmResult<()> {
+    fn create(
+        &mut self,
+        _id: <F as FsmBackend>::Timers,
+        _settings: &TimerSettings,
+    ) -> FsmResult<()> {
         Err(FsmError::NotSupported)
     }
 
@@ -175,25 +198,28 @@ impl<F> FsmTimers<F> for FsmTimersNull
     }
 }
 
-
 pub struct FsmTimersSub<'a, T, F, FSub>
-    where
-        F: FsmBackend,
-        T: FsmTimers<F>
+where
+    F: FsmBackend,
+    T: FsmTimers<F>,
 {
     pub parent: &'a mut T,
     pub _parent_fsm: PhantomData<F>,
-    pub _sub_fsm: PhantomData<FSub>
+    pub _sub_fsm: PhantomData<FSub>,
 }
 
 impl<'a, T, F, FSub> FsmTimers<FSub> for FsmTimersSub<'a, T, F, FSub>
-    where
-        F: FsmBackend,
-        T: FsmTimers<F>,
-        FSub: FsmBackend,
-        <F as FsmBackend>::Timers: From<<FSub as FsmBackend>::Timers>
+where
+    F: FsmBackend,
+    T: FsmTimers<F>,
+    FSub: FsmBackend,
+    <F as FsmBackend>::Timers: From<<FSub as FsmBackend>::Timers>,
 {
-    fn create(&mut self, id: <FSub as FsmBackend>::Timers, settings: &TimerSettings) -> FsmResult<()> {
+    fn create(
+        &mut self,
+        id: <FSub as FsmBackend>::Timers,
+        settings: &TimerSettings,
+    ) -> FsmResult<()> {
         self.parent.create(id.into(), settings)
     }
 

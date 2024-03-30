@@ -4,7 +4,7 @@ use crate::utils::{strip_generics, ty_append};
 pub struct FsmTypes {
     fsm: syn::Type,
     fsm_no_generics: syn::Type,
-    generics: syn::Generics
+    generics: syn::Generics,
 }
 
 impl FsmTypes {
@@ -12,7 +12,7 @@ impl FsmTypes {
         Self {
             fsm: ty.clone(),
             fsm_no_generics: strip_generics(ty.clone()),
-            generics: generics.clone()
+            generics: generics.clone(),
         }
     }
 
@@ -38,5 +38,5 @@ impl FsmTypes {
 
     pub fn get_fsm_timers_storage_ty(&self) -> syn::Type {
         ty_append(&self.fsm_no_generics, "TimersStorage")
-    }    
+    }
 }

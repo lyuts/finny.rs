@@ -1,43 +1,68 @@
 //! Standard library timers with dynamic allocation of the timer's storage.
 
-use std::{time::{Duration, Instant}};
 use crate::{FsmBackend, FsmTimers};
+use std::time::{Duration, Instant};
 
 pub struct TimersStd<F>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
     timers: Vec<(<F as FsmBackend>::Timers, StdTimer)>,
-    pending_intervals: Option<(<F as FsmBackend>::Timers, usize)>
+    pending_intervals: Option<(<F as FsmBackend>::Timers, usize)>,
 }
 
 #[derive(Debug)]
 enum StdTimer {
-    Timeout { started_at: Instant, duration: Duration },
-    Interval { started_at: Instant, interval: Duration }
+    Timeout {
+        started_at: Instant,
+        duration: Duration,
+    },
+    Interval {
+        started_at: Instant,
+        interval: Duration,
+    },
 }
 
 impl<F> TimersStd<F>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
     pub fn new() -> Self {
         Self {
             timers: vec![],
-            pending_intervals: None
+            pending_intervals: None,
         }
     }
 }
 
 impl<F> FsmTimers<F> for TimersStd<F>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
-    fn create(&mut self, id: <F as FsmBackend>::Timers, settings: &crate::TimerSettings) -> crate::FsmResult<()> {
+    fn create(
+        &mut self,
+        id: <F as FsmBackend>::Timers,
+        settings: &crate::TimerSettings,
+    ) -> crate::FsmResult<()> {
         // try to cancel any existing ones
         self.cancel(id.clone())?;
 
         if settings.renew {
-            self.timers.push((id, StdTimer::Interval { started_at: Instant::now(), interval: settings.timeout }));
+            self.timers.push((
+                id,
+                StdTimer::Interval {
+                    started_at: Instant::now(),
+                    interval: settings.timeout,
+                },
+            ));
         } else {
-            self.timers.push((id, StdTimer::Timeout { started_at: Instant::now(), duration: settings.timeout }));
+            self.timers.push((
+                id,
+                StdTimer::Timeout {
+                    started_at: Instant::now(),
+                    duration: settings.timeout,
+                },
+            ));
         }
 
         Ok(())
@@ -62,11 +87,17 @@ impl<F> FsmTimers<F> for TimersStd<F>
         let now = Instant::now();
         for (idx, (timer_id, timer)) in self.timers.iter_mut().enumerate() {
             match timer {
-                StdTimer::Timeout { started_at, duration } if now.duration_since(*started_at) >= *duration => {
+                StdTimer::Timeout {
+                    started_at,
+                    duration,
+                } if now.duration_since(*started_at) >= *duration => {
                     timed_out_idx = Some(idx);
                     break;
-                },
-                StdTimer::Interval { ref mut started_at, interval } if now.duration_since(*started_at) >= *interval => {
+                }
+                StdTimer::Interval {
+                    ref mut started_at,
+                    interval,
+                } if now.duration_since(*started_at) >= *interval => {
                     let t = now.duration_since(*started_at);
                     let times = ((t.as_secs_f32() / interval.as_secs_f32()).floor() as usize) - 1;
                     if times > 0 {
@@ -74,8 +105,8 @@ impl<F> FsmTimers<F> for TimersStd<F>
                     }
                     *started_at = now;
                     return Some(timer_id.clone());
-                },
-                _ => ()
+                }
+                _ => (),
             }
         }
 

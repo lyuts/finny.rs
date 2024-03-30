@@ -1,9 +1,7 @@
-use finny::{FsmFactory, finny_fsm};
+use finny::finny_fsm;
 
 #[derive(Default, Debug)]
-struct State {
-
-}
+struct State {}
 
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<MiniMachine, ()>) -> BuiltFsm {

@@ -1,11 +1,11 @@
-use finny::{FsmFactory, FsmResult, finny_fsm};
+use finny::{finny_fsm, FsmFactory, FsmResult};
 use std::{fmt::Debug, ops::AddAssign};
 
 extern crate finny;
 
 pub struct Ctx<'a, T> {
     ref_str: &'a str,
-    val: T
+    val: T,
 }
 
 #[derive(Debug, Default)]
@@ -18,7 +18,8 @@ pub struct Event;
 
 #[finny_fsm]
 fn build_fsm<'a, TT>(mut fsm: FsmBuilder<StateMachine<'a, TT>, Ctx<'a, TT>>) -> BuiltFsm
-    where TT: Debug + AddAssign<usize> + PartialOrd<usize>
+where
+    TT: Debug + AddAssign<usize> + PartialOrd<usize>,
 {
     fsm.initial_state::<StateA>();
     fsm.state::<StateA>()
@@ -27,9 +28,7 @@ fn build_fsm<'a, TT>(mut fsm: FsmBuilder<StateMachine<'a, TT>, Ctx<'a, TT>>) -> 
         })
         .on_event::<Event>()
         .transition_to::<StateB>()
-        .guard(|_ev, ctx, _| {
-            ctx.context.val > 100
-        })
+        .guard(|_ev, ctx, _| ctx.context.val > 100)
         .action(|_ev, ctx, _, _| {
             ctx.context.val += 100;
         });
@@ -42,11 +41,14 @@ fn build_fsm<'a, TT>(mut fsm: FsmBuilder<StateMachine<'a, TT>, Ctx<'a, TT>>) -> 
 #[test]
 fn test_generic_ctx() -> FsmResult<()> {
     let some_str = "hello!";
-    let ctx = Ctx { val: 123, ref_str: &some_str };
-    
+    let ctx = Ctx {
+        val: 123,
+        ref_str: &some_str,
+    };
+
     let mut fsm = StateMachine::new(ctx)?;
     assert_eq!(123, fsm.val);
-    
+
     fsm.start()?;
 
     assert_eq!(124, fsm.val);
@@ -54,6 +56,6 @@ fn test_generic_ctx() -> FsmResult<()> {
     fsm.dispatch(Event)?;
 
     assert_eq!(224, fsm.val);
-    
+
     Ok(())
 }

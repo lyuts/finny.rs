@@ -1,48 +1,67 @@
 //! A naive timers implementation based on standard libraries' `Instant` time provider and no runtime allocations.
 //! Type system has to be setup manually.
 
-use std::{time::{Duration, Instant}};
-use crate::{FsmBackend, FsmTimers, TimersStorage, AllVariants};
+use crate::{AllVariants, FsmBackend, FsmTimers, TimersStorage};
+use std::time::{Duration, Instant};
 
 pub struct TimersStdNoAlloc<F, S>
-    where F: FsmBackend
+where
+    F: FsmBackend,
 {
     timers: S,
-    pending_intervals: Option<(<F as FsmBackend>::Timers, usize)>
+    pending_intervals: Option<(<F as FsmBackend>::Timers, usize)>,
 }
 
 #[derive(Debug)]
 pub enum StdTimer {
-    Timeout { started_at: Instant, duration: Duration },
-    Interval { started_at: Instant, interval: Duration }
+    Timeout {
+        started_at: Instant,
+        duration: Duration,
+    },
+    Interval {
+        started_at: Instant,
+        interval: Duration,
+    },
 }
 
 impl<F, S> TimersStdNoAlloc<F, S>
-    where F: FsmBackend,
+where
+    F: FsmBackend,
     S: TimersStorage<<F as FsmBackend>::Timers, StdTimer>,
 {
     pub fn new(timers: S) -> Self {
         Self {
             timers,
-            pending_intervals: None
+            pending_intervals: None,
         }
     }
 }
 
 impl<F, S> FsmTimers<F> for TimersStdNoAlloc<F, S>
-    where F: FsmBackend,
-    S: TimersStorage<<F as FsmBackend>::Timers, StdTimer>
+where
+    F: FsmBackend,
+    S: TimersStorage<<F as FsmBackend>::Timers, StdTimer>,
 {
-    fn create(&mut self, id: <F as FsmBackend>::Timers, settings: &crate::TimerSettings) -> crate::FsmResult<()> {
+    fn create(
+        &mut self,
+        id: <F as FsmBackend>::Timers,
+        settings: &crate::TimerSettings,
+    ) -> crate::FsmResult<()> {
         // try to cancel any existing ones
         self.cancel(id.clone())?;
 
         let t = self.timers.get_timer_storage_mut(&id);
 
         if settings.renew {
-            *t = Some(StdTimer::Interval { started_at: Instant::now(), interval: settings.timeout });
+            *t = Some(StdTimer::Interval {
+                started_at: Instant::now(),
+                interval: settings.timeout,
+            });
         } else {
-            *t = Some(StdTimer::Timeout { started_at: Instant::now(), duration: settings.timeout });
+            *t = Some(StdTimer::Timeout {
+                started_at: Instant::now(),
+                duration: settings.timeout,
+            });
         }
 
         Ok(())
@@ -70,11 +89,17 @@ impl<F, S> FsmTimers<F> for TimersStdNoAlloc<F, S>
         for timer_id in <F as FsmBackend>::Timers::iter() {
             let timer = self.timers.get_timer_storage_mut(&timer_id);
             match timer {
-                Some(StdTimer::Timeout { started_at, duration }) if now.duration_since(*started_at) >= *duration => {
+                Some(StdTimer::Timeout {
+                    started_at,
+                    duration,
+                }) if now.duration_since(*started_at) >= *duration => {
                     timed_out_id = Some(timer_id);
                     break;
-                },
-                Some(StdTimer::Interval { ref mut started_at, interval }) if now.duration_since(*started_at) >= *interval => {
+                }
+                Some(StdTimer::Interval {
+                    ref mut started_at,
+                    interval,
+                }) if now.duration_since(*started_at) >= *interval => {
                     let t = now.duration_since(*started_at);
                     let times = ((t.as_secs_f32() / interval.as_secs_f32()).floor() as usize) - 1;
                     if times > 0 {
@@ -82,8 +107,8 @@ impl<F, S> FsmTimers<F> for TimersStdNoAlloc<F, S>
                     }
                     *started_at = now;
                     return Some(timer_id.clone());
-                },
-                _ => ()
+                }
+                _ => (),
             }
         }
 
@@ -92,7 +117,7 @@ impl<F, S> FsmTimers<F> for TimersStdNoAlloc<F, S>
             *timer = None;
             return Some(id);
         }
-        
+
         None
     }
 }

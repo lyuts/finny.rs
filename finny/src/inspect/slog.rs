@@ -1,32 +1,35 @@
 extern crate alloc;
 
-use slog::{info, o, error};
-use crate::{FsmBackend, FsmBackendImpl, FsmEvent, Inspect, InspectEvent, InspectFsmEvent};
 use crate::lib::*;
-use AsRef;
-use core::fmt::Debug;
-use core::any::Any;
-use alloc::string::ToString;
+use crate::{FsmBackend, FsmBackendImpl, FsmEvent, Inspect, InspectEvent, InspectFsmEvent};
 use alloc::format;
+use alloc::string::ToString;
+use core::any::Any;
+use core::fmt::Debug;
+use slog::{error, info, o};
+use AsRef;
 
 pub struct InspectSlog {
-    pub logger: slog::Logger
+    pub logger: slog::Logger,
 }
 
 impl InspectSlog {
     pub fn new(logger: Option<slog::Logger>) -> Self {
         InspectSlog {
-            logger: logger.unwrap_or(slog::Logger::root(slog::Discard, o!()))
+            logger: logger.unwrap_or(slog::Logger::root(slog::Discard, o!())),
         }
     }
 }
 
-impl Inspect for InspectSlog
-{
-    fn new_event<F: FsmBackend>(&self, event: &FsmEvent<<F as FsmBackend>::Events, <F as FsmBackend>::Timers>, fsm: &FsmBackendImpl<F>) -> Self {
+impl Inspect for InspectSlog {
+    fn new_event<F: FsmBackend>(
+        &self,
+        event: &FsmEvent<<F as FsmBackend>::Events, <F as FsmBackend>::Timers>,
+        fsm: &FsmBackendImpl<F>,
+    ) -> Self {
         let event_display = match event {
             FsmEvent::Timer(t) => format!("Fsm::Timer({:?})", t),
-            _ => event.as_ref().to_string()
+            _ => event.as_ref().to_string(),
         };
 
         let current_state = format!("{:?}", fsm.get_current_states());
@@ -34,7 +37,7 @@ impl Inspect for InspectSlog
         let kv = o!("event" => event_display, "start_state" => current_state);
         info!(self.logger, "Dispatching"; &kv);
         InspectSlog {
-            logger: self.logger.new(kv)
+            logger: self.logger.new(kv),
         }
     }
 
@@ -43,29 +46,37 @@ impl Inspect for InspectSlog
         let kv = o!("transition" => transition);
         info!(self.logger, "Matched transition"; &kv);
         InspectSlog {
-            logger: self.logger.new(kv)
+            logger: self.logger.new(kv),
         }
     }
- 
+
     fn for_sub_machine<FSub: FsmBackend>(&self) -> Self {
         let sub_fsm = type_name::<FSub>();
         let kv = o!("sub_fsm" => sub_fsm);
         info!(self.logger, "Dispatching to a submachine"; &kv);
         InspectSlog {
-            logger: self.logger.new(kv)
+            logger: self.logger.new(kv),
         }
     }
 
-    fn for_timer<F>(&self, timer_id: <F as FsmBackend>::Timers) -> Self where F: FsmBackend {
+    fn for_timer<F>(&self, timer_id: <F as FsmBackend>::Timers) -> Self
+    where
+        F: FsmBackend,
+    {
         let kv = o!("timer_id" => format!("{:?}", timer_id));
         InspectSlog {
-            logger: self.logger.new(kv)
+            logger: self.logger.new(kv),
         }
-    }    
+    }
 
     fn on_guard<T>(&self, guard_result: bool) {
         let guard = type_name::<T>();
-        info!(self.logger, "Guard {guard} evaluated to {guard_result}", guard = guard, guard_result = guard_result);
+        info!(
+            self.logger,
+            "Guard {guard} evaluated to {guard_result}",
+            guard = guard,
+            guard_result = guard_result
+        );
     }
 
     fn on_state_enter<S>(&self) {
@@ -88,7 +99,10 @@ impl Inspect for InspectSlog
         info!(self.logger, "Dispatch done"; "stop_state" => states);
     }
 
-    fn on_error<E>(&self, msg: &str, error: &E) where E: Debug {
+    fn on_error<E>(&self, msg: &str, error: &E)
+    where
+        E: Debug,
+    {
         let kv = o!("error" => format!("{:?}", error));
         error!(self.logger, "{}", msg; kv);
     }
@@ -98,8 +112,7 @@ impl Inspect for InspectSlog
     }
 }
 
-impl InspectEvent for InspectSlog
-{
+impl InspectEvent for InspectSlog {
     fn on_event<S: Any + Debug + Clone>(&self, event: &InspectFsmEvent<S>) {
         info!(self.logger, "Inspection event {:?}", event);
     }

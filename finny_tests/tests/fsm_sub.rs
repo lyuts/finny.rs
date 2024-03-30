@@ -1,36 +1,43 @@
 extern crate finny;
 
-use finny::{FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull, finny_fsm, inspect::slog::InspectSlog};
-use slog::{Drain, o};
+use finny::{
+    finny_fsm, inspect::slog::InspectSlog, FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory,
+    FsmResult, FsmTimersNull,
+};
+use slog::{o, Drain};
 
 #[derive(Default)]
 pub struct MainContext {
     sub_enter: usize,
     sub_exit: usize,
-    sub_action: usize
+    sub_action: usize,
 }
 
 #[derive(Default)]
 pub struct StateA {
-    value: usize
+    value: usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct Event;
 #[derive(Debug, Clone)]
-pub struct EventSub { n: usize }
+pub struct EventSub {
+    n: usize,
+}
 #[derive(Debug, Clone)]
 pub struct EventSubSecond;
 
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<StateMachine, MainContext>) -> BuiltFsm {
     fsm.initial_state::<StateA>();
-    fsm.state::<StateA>()        
-        .on_event::<Event>().transition_to::<SubStateMachine>()
-    ;
+    fsm.state::<StateA>()
+        .on_event::<Event>()
+        .transition_to::<SubStateMachine>();
 
     fsm.sub_machine::<SubStateMachine>()
-        .with_context(|ctx| SubContext { value: ctx.sub_enter })
+        .with_context(|ctx| SubContext {
+            value: ctx.sub_enter,
+        })
         .on_entry(|_sub, ctx| {
             ctx.sub_enter += 1;
         })
@@ -63,17 +70,17 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, MainContext>) -> BuiltFsm {
 
 #[derive(Default)]
 pub struct SubStateA {
-    value: usize
+    value: usize,
 }
 #[derive(Default)]
 pub struct SubStateB {
-    value: usize
+    value: usize,
 }
 #[derive(Debug, Clone)]
 pub struct SubEvent;
 
 pub struct SubContext {
-    value: usize
+    value: usize,
 }
 
 #[finny_fsm]
@@ -82,7 +89,8 @@ fn build_sub_fsm(mut fsm: FsmBuilder<SubStateMachine, SubContext>) -> BuiltFsm {
     fsm.state::<SubStateA>()
         .on_entry(|state, _ctx| {
             state.value += 1;
-        }).on_event::<SubEvent>()
+        })
+        .on_event::<SubEvent>()
         .transition_to::<SubStateB>()
         .action(|_ev, _ctx, state_a, _state_b| {
             state_a.value += 1;
@@ -94,17 +102,17 @@ fn build_sub_fsm(mut fsm: FsmBuilder<SubStateMachine, SubContext>) -> BuiltFsm {
 
 #[derive(Default)]
 pub struct SecondSubStateA {
-    value: usize
+    value: usize,
 }
 #[derive(Default)]
 pub struct SecondSubStateB {
-    value: usize
+    value: usize,
 }
 #[derive(Debug, Clone)]
 pub struct SecondSubEvent;
 
 pub struct SecondSubContext {
-    value: usize
+    value: usize,
 }
 
 #[finny_fsm]
@@ -113,7 +121,8 @@ fn build_second_sub_fsm(mut fsm: FsmBuilder<SecondSubStateMachine, SecondSubCont
     fsm.state::<SecondSubStateA>()
         .on_entry(|state, _ctx| {
             state.value += 1;
-        }).on_event::<SecondSubEvent>()
+        })
+        .on_event::<SecondSubEvent>()
         .transition_to::<SecondSubStateB>()
         .action(|_ev, _ctx, state_a, _state_b| {
             state_a.value += 1;
@@ -123,7 +132,6 @@ fn build_second_sub_fsm(mut fsm: FsmBuilder<SecondSubStateMachine, SecondSubCont
     fsm.build()
 }
 
-
 #[test]
 fn test_sub() -> FsmResult<()> {
     let decorator = slog_term::TermDecorator::new().build();
@@ -131,26 +139,46 @@ fn test_sub() -> FsmResult<()> {
     let drain = std::sync::Mutex::new(drain).fuse();
 
     let logger = slog::Logger::root(drain, o!());
-    
-    let mut fsm = StateMachine::new_with(MainContext::default(), FsmEventQueueVec::new(), InspectSlog::new(Some(logger)), FsmTimersNull)?;
-    
+
+    let mut fsm = StateMachine::new_with(
+        MainContext::default(),
+        FsmEventQueueVec::new(),
+        InspectSlog::new(Some(logger)),
+        FsmTimersNull,
+    )?;
+
     fsm.start()?;
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::StateA), fsm.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::StateA),
+        fsm.get_current_states()[0]
+    );
 
     fsm.dispatch(Event)?;
-    
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::SubStateMachine), fsm.get_current_states()[0]);
+
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::SubStateMachine),
+        fsm.get_current_states()[0]
+    );
     let sub: &SubStateMachine = fsm.get_state();
-    assert_eq!(FsmCurrentState::State(SubStateMachineCurrentState::SubStateA), sub.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(SubStateMachineCurrentState::SubStateA),
+        sub.get_current_states()[0]
+    );
     let state: &SubStateA = sub.get_state();
     assert_eq!(1, state.value);
-    
+
     let ev: SubStateMachineEvents = SubEvent.into();
     fsm.dispatch(ev)?;
-    
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::SubStateMachine), fsm.get_current_states()[0]);
+
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::SubStateMachine),
+        fsm.get_current_states()[0]
+    );
     let sub: &SubStateMachine = fsm.get_state();
-    assert_eq!(FsmCurrentState::State(SubStateMachineCurrentState::SubStateB), sub.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(SubStateMachineCurrentState::SubStateB),
+        sub.get_current_states()[0]
+    );
     let state: &SubStateA = sub.get_state();
     assert_eq!(2, state.value);
 
@@ -166,13 +194,22 @@ fn test_sub() -> FsmResult<()> {
     assert_eq!(1, fsm.sub_action);
 
     fsm.dispatch(Event)?;
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::StateA), fsm.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::StateA),
+        fsm.get_current_states()[0]
+    );
 
     fsm.dispatch(Event)?;
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::SubStateMachine), fsm.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::SubStateMachine),
+        fsm.get_current_states()[0]
+    );
 
     fsm.dispatch(EventSubSecond)?;
-    assert_eq!(FsmCurrentState::State(StateMachineCurrentState::SecondSubStateMachine), fsm.get_current_states()[0]);
-    
+    assert_eq!(
+        FsmCurrentState::State(StateMachineCurrentState::SecondSubStateMachine),
+        fsm.get_current_states()[0]
+    );
+
     Ok(())
 }

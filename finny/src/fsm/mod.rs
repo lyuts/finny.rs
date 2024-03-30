@@ -1,26 +1,26 @@
 //! The public Finite State Machine traits. The derive macros will implement these for your particular
 //! state machines.
 
+mod dispatch;
 mod events;
-mod fsm_impl;
 mod fsm_factory;
+mod fsm_impl;
+mod inspect;
 mod queue;
 mod states;
-mod transitions;
 mod tests_fsm;
-mod dispatch;
 mod timers;
-mod inspect;
+mod transitions;
 
+pub use self::dispatch::*;
 pub use self::events::*;
 pub use self::fsm_factory::*;
 pub use self::fsm_impl::*;
+pub use self::inspect::*;
 pub use self::queue::*;
 pub use self::states::*;
-pub use self::transitions::*;
-pub use self::inspect::*;
-pub use self::dispatch::*;
 pub use self::timers::*;
+pub use self::transitions::*;
 
 use crate::lib::*;
 
@@ -32,14 +32,17 @@ pub enum FsmError {
     NoTransition,
     QueueOverCapacity,
     NotSupported,
-    TimerNotStarted
+    TimerNotStarted,
 }
 
 pub type FsmDispatchResult = FsmResult<()>;
 
 /// Finite State Machine backend. Handles the dispatching, the types are
 /// defined by the code generator.
-pub trait FsmBackend where Self: Sized + Debug {
+pub trait FsmBackend
+where
+    Self: Sized + Debug,
+{
     /// The machine's context that is shared between its constructors and actions.
     type Context;
     /// The type that holds the states of the machine.
@@ -50,14 +53,22 @@ pub trait FsmBackend where Self: Sized + Debug {
     /// An enum with variants for all the possible timer instances, with support for submachines.
     type Timers: Debug + Clone + PartialEq + AllVariants;
 
-    fn dispatch_event<Q, I, T>(ctx: DispatchContext<Self, Q, I, T>, event: FsmEvent<Self::Events, Self::Timers>) -> FsmDispatchResult
-        where Q: FsmEventQueue<Self>, I: Inspect, T: FsmTimers<Self>;
+    fn dispatch_event<Q, I, T>(
+        ctx: DispatchContext<Self, Q, I, T>,
+        event: FsmEvent<Self::Events, Self::Timers>,
+    ) -> FsmDispatchResult
+    where
+        Q: FsmEventQueue<Self>,
+        I: Inspect,
+        T: FsmTimers<Self>;
 }
 
 /// Enumerates all the possible variants of a simple enum.
-pub trait AllVariants where Self: Sized
+pub trait AllVariants
+where
+    Self: Sized,
 {
-    type Iter: Iterator<Item=Self>;
+    type Iter: Iterator<Item = Self>;
 
     fn iter() -> Self::Iter;
 }

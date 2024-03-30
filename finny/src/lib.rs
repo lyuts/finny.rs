@@ -25,17 +25,17 @@
 //! [dependencies]
 //! finny = "0.2"
 //! ```
-//! 
+//!
 //! ### Code
-//! 
+//!
 //! ```rust
 //! use finny::{finny_fsm, FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}};
-//! 
+//!
 //! // The context is shared between all guards, actions and transitions. Generics are supported here!
 //! #[derive(Default)]
 //! pub struct MyContext { val: u32 }
 //! // The states are plain structs.
-//! #[derive(Default)] 
+//! #[derive(Default)]
 //! pub struct MyStateA { n: usize }
 //! #[derive(Default)]
 //! pub struct MyStateB;
@@ -60,7 +60,7 @@
 //!     fsm.initial_state::<MyStateA>();
 //!     fsm.build()
 //! }
-//! 
+//!
 //! // The FSM is built and tested.
 //! fn main() -> FsmResult<()> {
 //!     let mut fsm = MyFsm::new(MyContext::default())?;
@@ -80,14 +80,13 @@
 pub mod decl;
 mod fsm;
 
-
 pub mod inspect;
 pub mod timers;
 
 pub use fsm::*;
 
-extern crate finny_derive;
 extern crate derive_more;
+extern crate finny_derive;
 
 /// The procedural macro that will transform the builder function into the FSM.
 pub use finny_derive::finny_fsm;
@@ -106,16 +105,16 @@ mod lib {
         pub use core::*;
         #[cfg(feature = "std")]
         pub use std::*;
-   }
+    }
 
-   pub use self::core::marker::{PhantomData};
-   pub use self::core::ops::{Deref, DerefMut};
-   pub use self::core::fmt::Debug;
-   pub use self::core::result::Result;
-   pub use self::core::fmt;
-   pub use self::core::any::type_name;
-   pub use self::core::time::Duration;
+    pub use self::core::any::type_name;
+    pub use self::core::fmt;
+    pub use self::core::fmt::Debug;
+    pub use self::core::marker::PhantomData;
+    pub use self::core::ops::{Deref, DerefMut};
+    pub use self::core::result::Result;
+    pub use self::core::time::Duration;
 
-   #[cfg(feature="std")]
-   pub use std::collections::VecDeque;
+    #[cfg(feature = "std")]
+    pub use std::collections::VecDeque;
 }

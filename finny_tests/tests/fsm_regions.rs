@@ -1,25 +1,27 @@
 extern crate finny;
 
-use finny::{FsmCurrentState, FsmResult, FsmFactory, finny_fsm};
+use finny::{finny_fsm, FsmCurrentState, FsmFactory, FsmResult};
 
 #[derive(Default)]
 pub struct StateA {
-    value: usize
+    value: usize,
 }
 #[derive(Default)]
 pub struct StateB {
-    value: usize
+    value: usize,
 }
 #[derive(Default)]
 pub struct StateX {
-    value: usize
+    value: usize,
 }
 #[derive(Default)]
 pub struct StateY {
-    value: usize
+    value: usize,
 }
 #[derive(Clone)]
-pub struct Event { n: usize }
+pub struct Event {
+    n: usize,
+}
 
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<StateMachine, ()>) -> BuiltFsm {
@@ -30,29 +32,35 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, ()>) -> BuiltFsm {
     fsm.state::<StateA>();
     fsm.state::<StateB>();
 
-    fsm.state::<StateA>().on_event::<Event>().transition_to::<StateB>();
-
+    fsm.state::<StateA>()
+        .on_event::<Event>()
+        .transition_to::<StateB>();
 
     // region 2
 
     fsm.state::<StateX>();
     fsm.state::<StateY>();
 
-    fsm.state::<StateX>().on_event::<Event>().transition_to::<StateY>();
-
+    fsm.state::<StateX>()
+        .on_event::<Event>()
+        .transition_to::<StateY>();
 
     fsm.build()
 }
 
-
 #[test]
 fn test_regions() -> FsmResult<()> {
     let mut fsm = StateMachine::new(())?;
-    
+
     fsm.start()?;
     let current_states = fsm.get_current_states();
-    assert_eq!([FsmCurrentState::State(StateMachineCurrentState::StateA), FsmCurrentState::State(StateMachineCurrentState::StateX)], current_states);
+    assert_eq!(
+        [
+            FsmCurrentState::State(StateMachineCurrentState::StateA),
+            FsmCurrentState::State(StateMachineCurrentState::StateX)
+        ],
+        current_states
+    );
 
-    
     Ok(())
 }

@@ -2,31 +2,34 @@ extern crate finny;
 
 use std::{thread::sleep, time::Duration};
 
-use finny::{FsmCurrentState, FsmEventQueueVec, FsmFactory, FsmResult, finny_fsm, inspect::slog::InspectSlog, timers::std::{TimersStd}, AllVariants};
-use slog::{Drain, o};
+use finny::{
+    finny_fsm, inspect::slog::InspectSlog, timers::std::TimersStd, AllVariants, FsmCurrentState,
+    FsmEventQueueVec, FsmFactory, FsmResult,
+};
+use slog::{o, Drain};
 
 #[derive(Debug)]
 pub struct TimersMachineContext {
-    exit_a: bool
+    exit_a: bool,
 }
 
 #[derive(Default)]
 pub struct StateA {
-    timers: usize
+    timers: usize,
 }
 #[derive(Default)]
-pub struct StateB {
-
-}
+pub struct StateB {}
 #[derive(Default)]
 pub struct StateC;
 #[derive(Clone, Debug)]
 pub struct EventClick;
 #[derive(Clone, Debug)]
-pub struct EventTimer { n: usize }
+pub struct EventTimer {
+    n: usize,
+}
 
-#[derive(Clone, Debug)]
-pub struct EventEnter { shift: bool }
+// #[derive(Clone, Debug)]
+// pub struct EventEnter { shift: bool }
 
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltFsm {
@@ -55,23 +58,25 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
         });
 
     fsm.state::<StateA>()
-        .on_entry_start_timer(|_ctx, timer| {
-            timer.timeout = Duration::from_millis(100);
-            timer.renew = true;
-            timer.cancel_on_state_exit = true;
-        }, |_ctx, _state| {
-            Some( EventTimer {n: 0}.into() )
-        })
+        .on_entry_start_timer(
+            |_ctx, timer| {
+                timer.timeout = Duration::from_millis(100);
+                timer.renew = true;
+                timer.cancel_on_state_exit = true;
+            },
+            |_ctx, _state| Some(EventTimer { n: 0 }.into()),
+        )
         .with_timer_ty::<Timer1>();
 
     fsm.state::<StateA>()
-        .on_entry_start_timer(|_ctx, timer| {
-            timer.timeout = Duration::from_millis(200);
-            timer.renew = false;
-            timer.cancel_on_state_exit = true;
-        }, |_ctx, _state| {
-            Some( EventTimer {n: 1}.into() )
-        })
+        .on_entry_start_timer(
+            |_ctx, timer| {
+                timer.timeout = Duration::from_millis(200);
+                timer.renew = false;
+                timer.cancel_on_state_exit = true;
+            },
+            |_ctx, _state| Some(EventTimer { n: 1 }.into()),
+        )
         .with_timer_ty::<Timer2>();
 
     fsm.state::<StateB>();
@@ -89,7 +94,7 @@ pub struct BlinkingOn;
 pub struct BlinkToggle;
 #[derive(Default)]
 pub struct BlinkerContext {
-    toggles: usize
+    toggles: usize,
 }
 
 #[finny_fsm]
@@ -112,18 +117,17 @@ fn build_blinker_fsm(mut fsm: FsmBuilder<BlinkerMachine, BlinkerContext>) -> Bui
         });
 
     fsm.state::<BlinkingOn>()
-        .on_entry_start_timer(|_ctx, settings| {
-            settings.timeout = Duration::from_millis(100);
-            settings.renew = true;
-        }, |_ctx, _state| {
-            Some( BlinkToggle.into() )
-        })
+        .on_entry_start_timer(
+            |_ctx, settings| {
+                settings.timeout = Duration::from_millis(100);
+                settings.renew = true;
+            },
+            |_ctx, _state| Some(BlinkToggle.into()),
+        )
         .with_timer_ty::<BlinkingTimer>();
 
     fsm.build()
 }
-
-
 
 #[test]
 fn test_timers_fsm() -> FsmResult<()> {
@@ -131,20 +135,34 @@ fn test_timers_fsm() -> FsmResult<()> {
     let drain = slog_term::CompactFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
     let logger = slog::Logger::root(drain, o!());
-    
+
     let ctx = TimersMachineContext { exit_a: false };
-    
 
     let sub_timers_variants: Vec<_> = BlinkerMachineTimers::iter().collect();
-    assert_eq!(&[BlinkerMachineTimers::BlinkingTimer], sub_timers_variants.as_slice());
+    assert_eq!(
+        &[BlinkerMachineTimers::BlinkingTimer],
+        sub_timers_variants.as_slice()
+    );
 
     let timers_variants: Vec<_> = TimersMachineTimers::iter().collect();
-    assert_eq!(&[TimersMachineTimers::Timer1, TimersMachineTimers::Timer2, TimersMachineTimers::BlinkerMachine(BlinkerMachineTimers::BlinkingTimer)], timers_variants.as_slice());
+    assert_eq!(
+        &[
+            TimersMachineTimers::Timer1,
+            TimersMachineTimers::Timer2,
+            TimersMachineTimers::BlinkerMachine(BlinkerMachineTimers::BlinkingTimer)
+        ],
+        timers_variants.as_slice()
+    );
 
-    let mut fsm = TimersMachine::new_with(ctx, FsmEventQueueVec::new(), InspectSlog::new(Some(logger)), TimersStd::new())?;
-    
+    let mut fsm = TimersMachine::new_with(
+        ctx,
+        FsmEventQueueVec::new(),
+        InspectSlog::new(Some(logger)),
+        TimersStd::new(),
+    )?;
+
     fsm.start()?;
-    
+
     sleep(Duration::from_millis(450));
 
     fsm.dispatch_timer_events()?;
@@ -155,9 +173,12 @@ fn test_timers_fsm() -> FsmResult<()> {
 
     sleep(Duration::from_millis(200));
 
-    fsm.dispatch_timer_events()?;    
+    fsm.dispatch_timer_events()?;
 
-    assert_eq!(FsmCurrentState::State(TimersMachineCurrentState::StateB), fsm.get_current_states()[0]);
+    assert_eq!(
+        FsmCurrentState::State(TimersMachineCurrentState::StateB),
+        fsm.get_current_states()[0]
+    );
 
     let state_a: &StateA = fsm.get_state();
     assert_eq!(5, state_a.timers);

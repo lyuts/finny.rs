@@ -1,37 +1,44 @@
 //! An implementation of timers that relies just on the `Duration`. Has to be called with
 //! a reasonable period rate to trigger the timers.
 
-use crate::{FsmBackend, FsmTimers, TimersStorage, AllVariants};
 use crate::lib::*;
-use Duration;
+use crate::{AllVariants, FsmBackend, FsmTimers, TimersStorage};
 use arraydeque::{Array, ArrayDeque};
+use Duration;
 
 pub struct TimersCore<F, S, Q>
-    where F: FsmBackend,
-          Q: Array<Item = <F as FsmBackend>::Timers>,
-          S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>
+where
+    F: FsmBackend,
+    Q: Array<Item = <F as FsmBackend>::Timers>,
+    S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
     timers: S,
     pending_events: ArrayDeque<Q>,
-    _fsm: PhantomData<F>
+    _fsm: PhantomData<F>,
 }
 
 #[derive(Debug)]
 pub enum CoreTimer {
-    Timeout { time_remaining: Duration },
-    Interval { time_remaining: Duration, interval: Duration }
+    Timeout {
+        time_remaining: Duration,
+    },
+    Interval {
+        time_remaining: Duration,
+        interval: Duration,
+    },
 }
 
 impl<F, S, Q> TimersCore<F, S, Q>
-    where F: FsmBackend,
+where
+    F: FsmBackend,
     Q: Array<Item = <F as FsmBackend>::Timers>,
-    S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>
+    S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
     pub fn new(timers: S) -> Self {
         Self {
             timers,
             pending_events: ArrayDeque::new(),
-            _fsm: PhantomData::default()
+            _fsm: PhantomData::default(),
         }
     }
 
@@ -42,15 +49,18 @@ impl<F, S, Q> TimersCore<F, S, Q>
 
             // todo: account for the difference between time remaining and elapsed time, currently we just reset it
             match timer {
-                Some(CoreTimer::Timeout { time_remaining}) => {
+                Some(CoreTimer::Timeout { time_remaining }) => {
                     if *time_remaining <= elapsed_since_last_tick {
                         let _ = self.pending_events.push_front(id);
                         *timer = None
                     } else {
                         *time_remaining -= elapsed_since_last_tick;
                     }
-                },
-                Some(CoreTimer::Interval { time_remaining, interval }) => {
+                }
+                Some(CoreTimer::Interval {
+                    time_remaining,
+                    interval,
+                }) => {
                     if *time_remaining <= elapsed_since_last_tick {
                         let _ = self.pending_events.push_front(id);
                         *time_remaining = *interval;
@@ -65,22 +75,32 @@ impl<F, S, Q> TimersCore<F, S, Q>
 }
 
 impl<F, S, Q> FsmTimers<F> for TimersCore<F, S, Q>
-    where F: FsmBackend,
+where
+    F: FsmBackend,
     Q: Array<Item = <F as FsmBackend>::Timers>,
-    S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>
+    S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
-    fn create(&mut self, id: <F as FsmBackend>::Timers, settings: &crate::TimerSettings) -> crate::FsmResult<()> {
+    fn create(
+        &mut self,
+        id: <F as FsmBackend>::Timers,
+        settings: &crate::TimerSettings,
+    ) -> crate::FsmResult<()> {
         let _ = self.cancel(id.clone());
 
         if settings.enabled {
             let timer = self.timers.get_timer_storage_mut(&id);
             if settings.renew {
-                *timer = Some(CoreTimer::Interval { interval: settings.timeout, time_remaining: settings.timeout });
+                *timer = Some(CoreTimer::Interval {
+                    interval: settings.timeout,
+                    time_remaining: settings.timeout,
+                });
             } else {
-                *timer = Some(CoreTimer::Timeout { time_remaining: settings.timeout });
+                *timer = Some(CoreTimer::Timeout {
+                    time_remaining: settings.timeout,
+                });
             }
         }
-        
+
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 use core::fmt::Debug;
 use core::any::Any;
 
-use crate::{FsmBackend, FsmBackendImpl, FsmEvent, FsmStates};
+use crate::{FsmBackend, FsmBackendImpl, FsmEvent};
 
 #[derive(Debug, Clone)]
 pub enum InspectFsmEvent<S> where S: Debug + Clone {

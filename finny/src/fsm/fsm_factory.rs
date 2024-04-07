@@ -1,4 +1,4 @@
-use crate::{FsmBackend, FsmBackendImpl, FsmEventQueue, FsmFrontend, FsmResult, FsmTimers, FsmTimersNull, Inspect};
+use crate::{FsmBackend, FsmBackendImpl, FsmEventQueue, FsmFrontend, FsmResult, FsmTimers, Inspect};
 
 #[cfg(feature="std")]
 use crate::{FsmEventQueueVec, timers::std::TimersStd};

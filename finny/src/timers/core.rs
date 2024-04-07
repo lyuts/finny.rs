@@ -38,13 +38,13 @@ impl<F, S, Q> TimersCore<F, S, Q>
     pub fn tick(&mut self, elapsed_since_last_tick: Duration) {
         let iter = <F as FsmBackend>::Timers::iter();
         for id in iter {
-            let mut timer = self.timers.get_timer_storage_mut(&id);
+            let timer = self.timers.get_timer_storage_mut(&id);
 
             // todo: account for the difference between time remaining and elapsed time, currently we just reset it
             match timer {
                 Some(CoreTimer::Timeout { time_remaining}) => {
                     if *time_remaining <= elapsed_since_last_tick {
-                        self.pending_events.push_front(id);
+                        let _ = self.pending_events.push_front(id);
                         *timer = None
                     } else {
                         *time_remaining -= elapsed_since_last_tick;
@@ -52,7 +52,7 @@ impl<F, S, Q> TimersCore<F, S, Q>
                 },
                 Some(CoreTimer::Interval { time_remaining, interval }) => {
                     if *time_remaining <= elapsed_since_last_tick {
-                        self.pending_events.push_front(id);
+                        let _ = self.pending_events.push_front(id);
                         *time_remaining = *interval;
                     } else {
                         *time_remaining -= elapsed_since_last_tick;
@@ -70,10 +70,10 @@ impl<F, S, Q> FsmTimers<F> for TimersCore<F, S, Q>
     S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>
 {
     fn create(&mut self, id: <F as FsmBackend>::Timers, settings: &crate::TimerSettings) -> crate::FsmResult<()> {
-        self.cancel(id.clone());
+        let _ = self.cancel(id.clone());
 
         if settings.enabled {
-            let mut timer = self.timers.get_timer_storage_mut(&id);
+            let timer = self.timers.get_timer_storage_mut(&id);
             if settings.renew {
                 *timer = Some(CoreTimer::Interval { interval: settings.timeout, time_remaining: settings.timeout });
             } else {

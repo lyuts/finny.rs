@@ -261,7 +261,7 @@ pub trait FsmAction<F: FsmBackend, E, State> {
             <F as FsmBackend>::States: AsMut<State>, Self: Sized,
             T: FsmTimers<F>
     {
-        let ctx = inspect_event_ctx.for_transition::<Self>();
+        let _ctx = inspect_event_ctx.for_transition::<Self>();
 
         if Self::should_trigger_state_actions() {
             <State>::execute_on_exit(context, region);

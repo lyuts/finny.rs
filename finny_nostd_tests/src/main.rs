@@ -3,7 +3,6 @@
 
 use finny::{finny_fsm, FsmFactory, FsmEventQueueArray, inspect::null::InspectNull, FsmTimersNull};
 use finny::decl::{FsmBuilder, BuiltFsm};
-use heapless::consts::*;
 
 pub fn main() {
     // Since we are passing a C string the final null character is mandatory

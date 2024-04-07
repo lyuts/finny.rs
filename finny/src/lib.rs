@@ -108,13 +108,12 @@ mod lib {
         pub use std::*;
    }
 
-   pub use self::core::marker::{self, PhantomData};
-   pub use self::core::ops::{Deref, DerefMut, Index, IndexMut};
+   pub use self::core::marker::{PhantomData};
+   pub use self::core::ops::{Deref, DerefMut};
    pub use self::core::fmt::Debug;
    pub use self::core::result::Result;
    pub use self::core::fmt;
    pub use self::core::any::type_name;
-   pub use self::core::slice::SliceIndex;
    pub use self::core::time::Duration;
 
    #[cfg(feature="std")]

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use proc_macro2::{Span, TokenStream};
+use proc_macro2::{TokenStream};
 use quote::{TokenStreamExt, quote};
 use crate::{codegen_meta::generate_fsm_meta, fsm::FsmTypes, parse::{FsmState, FsmStateAction, FsmStateKind}, utils::{remap_closure_inputs, to_field_name, tokens_to_string}};
 
@@ -1159,7 +1159,7 @@ pub fn generate_fsm_code(fsm: &FsmFnInput, _attr: TokenStream, _input: TokenStre
 
     let fsm_meta = generate_fsm_meta(&fsm);
 
-    let mut q = quote! {
+    let q = quote! {
         #states_store
 
         #states

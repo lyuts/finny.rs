@@ -1,4 +1,4 @@
-use crate::{FsmBackendImpl, lib::*};
+use crate::{lib::*};
 
 use crate::FsmBackend;
 use super::{FsmStateBuilder, FsmSubMachineBuilder};

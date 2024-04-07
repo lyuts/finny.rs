@@ -121,7 +121,7 @@ impl<F, Q, I, T> FsmFrontend<F, Q, I, T>
         while let Some(ev) = self.queue.dequeue() {
             let ev: <F as FsmBackend>::Events = ev.into();
             // todo: log?
-            Self::dispatch(self, ev);
+            let _ = Self::dispatch(self, ev);
         }
 
         Ok(())

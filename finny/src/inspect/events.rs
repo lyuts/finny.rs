@@ -54,15 +54,15 @@ impl<TI> Inspect for EventInspector<TI>
         
     }
 
-    fn event_done<F: FsmBackend>(self, fsm: &FsmBackendImpl<F>) {
+    fn event_done<F: FsmBackend>(self, _fsm: &FsmBackendImpl<F>) {
         
     }
 
-    fn on_error<E>(&self, msg: &str, error: &E) where E: core::fmt::Debug {
+    fn on_error<E>(&self, _msg: &str, _error: &E) where E: core::fmt::Debug {
         
     }
 
-    fn info(&self, msg: &str) {
+    fn info(&self, _msg: &str) {
         
     }
 }

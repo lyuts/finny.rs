@@ -1,4 +1,4 @@
-use crate::{FsmBackend, FsmEventQueue, FsmEventQueueSender, lib::*};
+use crate::{FsmBackend, FsmEventQueueSender, lib::*};
 
 /// The internal event type that also allows stopping or starting the machine.
 #[derive(Clone)]

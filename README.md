@@ -2,7 +2,7 @@
 
 [![Crates.io][crates-badge]][crates-url]
 [![Documentation](https://docs.rs/finny/badge.svg)](https://docs.rs/finny)
-![Build](https://github.com/hashmismatch/finny.rs/workflows/Build/badge.svg)
+![Build](https://github.com/lyuts/finny.rs/workflows/Build/badge.svg)
 
 ### Features
 * Declarative, builder API with a procedural function macro that generate the dispatcher

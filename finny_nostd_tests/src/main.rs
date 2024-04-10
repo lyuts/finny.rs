@@ -1,7 +1,7 @@
 // disabling until no_std + alloc becomes stable
 // #![no_std]
 
-use finny::{finny_fsm, FsmFactory, FsmEventQueueArray, inspect::null::InspectNull, FsmTimersNull};
+use finny::{finny_fsm, inspect::null::InspectNull, FsmEventQueueArray, FsmFactory, FsmTimersNull};
 
 pub fn main() {
     // Since we are passing a C string the final null character is mandatory
@@ -12,7 +12,7 @@ pub fn main() {
 
     {
         let ctx = StateMachineContext::default();
-        let queue = FsmEventQueueArray::<_, [_; 16]>::new(); 
+        let queue = FsmEventQueueArray::<_, [_; 16]>::new();
         let inspect = InspectNull::new();
         let timers = FsmTimersNull;
         let mut fsm = StateMachine::new_with(ctx, queue, inspect, timers).unwrap();
@@ -25,25 +25,29 @@ pub fn main() {
 #[derive(Debug, Default)]
 pub struct StateMachineContext {
     count: usize,
-    total_time: usize
+    total_time: usize,
 }
 
 #[derive(Default)]
 pub struct StateA {
     enter: usize,
-    exit: usize
+    exit: usize,
 }
 #[derive(Default)]
 pub struct StateB {
-    counter: usize
+    counter: usize,
 }
 #[derive(Default)]
 pub struct StateC;
 
 #[derive(Clone)]
-pub struct EventClick { time: usize }
+pub struct EventClick {
+    time: usize,
+}
 #[derive(Clone)]
-pub struct EventEnter { shift: bool }
+pub struct EventEnter {
+    shift: bool,
+}
 
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<StateMachine, StateMachineContext>) -> BuiltFsm {
@@ -60,9 +64,7 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, StateMachineContext>) -> BuiltFsm
         })
         .on_event::<EventClick>()
         .transition_to::<StateB>()
-        .guard(|ev, _ctx, _| {
-            ev.time > 100
-        })
+        .guard(|ev, _ctx, _| ev.time > 100)
         .action(|ev, ctx, _state_from, _state_to| {
             ctx.context.total_time += ev.time;
         });
@@ -73,9 +75,7 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, StateMachineContext>) -> BuiltFsm
         })
         .on_event::<EventEnter>()
         .internal_transition()
-        .guard(|ev, _ctx, _| {
-            ev.shift == false
-        })
+        .guard(|ev, _ctx, _| ev.shift == false)
         .action(|_ev, _ctx, state_b| {
             state_b.counter += 1;
         });

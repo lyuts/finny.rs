@@ -1,6 +1,6 @@
 //! An example Finny use case that showcases the generated documentation.
 
-use finny::{decl::{BuiltFsm, FsmBuilder}, finny_fsm};
+use finny::finny_fsm;
 
 extern crate finny;
 

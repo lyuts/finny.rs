@@ -1,8 +1,8 @@
 extern crate finny;
 
-use std::ops::{Add, AddAssign};
+use std::ops::Add;
 
-use finny::{FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull, decl::{BuiltFsm, FsmBuilder}, finny_fsm, inspect::slog::InspectSlog};
+use finny::{FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull, finny_fsm, inspect::slog::InspectSlog};
 use slog::{Drain, o};
 
 #[derive(Debug)]
@@ -35,26 +35,26 @@ fn build_fsm<'b, X, Y>(mut fsm: FsmBuilder<StateMachine<X, Y>, MainContext<X>>) 
     ;
 
     fsm.sub_machine::<SubStateMachine<Y>>()
-        .with_context(|ctx| {
+        .with_context(|_ctx| {
             SubContext { f2: Default::default() }
         })
-        .on_entry(|sub, ctx| {
+        .on_entry(|_sub, ctx| {
             ctx.field = ctx.field + 1;
         })
-        .on_exit(|sub, ctx| {
+        .on_exit(|_sub, ctx| {
             ctx.field = ctx.field + 1;
         })
         .on_event::<Event>()
         .transition_to::<StateA>()
-        .action(|ev, ctx, from, to| {
+        .action(|_ev, _ctx, _from, to| {
             to.value += 1;
         });
 
     fsm.sub_machine::<SubStateMachine<Y>>()
         .on_event::<EventSub>()
         .self_transition()
-        .guard(|ev, ctx, _| ev.n > 0)
-        .action(|ev, ctx, state| {
+        .guard(|ev, _ctx, _| ev.n > 0)
+        .action(|_ev, ctx, _state| {
             ctx.field = ctx.field + 1;
         });
 
@@ -89,7 +89,7 @@ fn build_sub_fsm<Y>(mut fsm: FsmBuilder<SubStateMachine<Y>, SubContext<Y>>) -> B
             state.value += 1;
         }).on_event::<SubEvent>()
         .transition_to::<SubStateB>()
-        .action(|ev, ctx, state_a, state_b| {
+        .action(|_ev, _ctx, state_a, _state_b| {
             state_a.value += 1;
         });
 

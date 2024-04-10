@@ -1,9 +1,9 @@
 extern crate finny;
 
-use std::{thread::{sleep, sleep_ms}, time::Duration};
+use std::{thread::sleep, time::Duration};
 
-use finny::{FsmCurrentState, FsmEvent, FsmEventQueueVec, FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}, finny_fsm, inspect::slog::InspectSlog, timers::std::{TimersStd}, AllVariants};
-use slog::{Drain, Logger, info, o};
+use finny::{FsmCurrentState, FsmEventQueueVec, FsmFactory, FsmResult, finny_fsm, inspect::slog::InspectSlog, timers::std::{TimersStd}, AllVariants};
+use slog::{Drain, o};
 
 #[derive(Debug)]
 pub struct TimersMachineContext {
@@ -37,12 +37,12 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
     fsm.state::<StateA>();
 
     fsm.state::<StateA>()
-        .on_exit(|state, ctx| {
+        .on_exit(|_state, ctx| {
             ctx.exit_a = true;
         })
         .on_event::<EventClick>()
         .transition_to::<StateB>()
-        .guard(|ev, ctx, states| {
+        .guard(|_ev, _ctx, states| {
             let state: &StateA = states.as_ref();
             state.timers >= 5
         });
@@ -50,7 +50,7 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
     fsm.state::<StateA>()
         .on_event::<EventTimer>()
         .internal_transition()
-        .action(|ev, ctx, state| {
+        .action(|_ev, _ctx, state| {
             state.timers += 1;
         });
 
@@ -59,7 +59,7 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
             timer.timeout = Duration::from_millis(100);
             timer.renew = true;
             timer.cancel_on_state_exit = true;
-        }, |ctx, state| {
+        }, |_ctx, _state| {
             Some( EventTimer {n: 0}.into() )
         })
         .with_timer_ty::<Timer1>();
@@ -69,7 +69,7 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
             timer.timeout = Duration::from_millis(200);
             timer.renew = false;
             timer.cancel_on_state_exit = true;
-        }, |ctx, state| {
+        }, |_ctx, _state| {
             Some( EventTimer {n: 1}.into() )
         })
         .with_timer_ty::<Timer2>();
@@ -112,10 +112,10 @@ fn build_blinker_fsm(mut fsm: FsmBuilder<BlinkerMachine, BlinkerContext>) -> Bui
         });
 
     fsm.state::<BlinkingOn>()
-        .on_entry_start_timer(|ctx, settings| {
+        .on_entry_start_timer(|_ctx, settings| {
             settings.timeout = Duration::from_millis(100);
             settings.renew = true;
-        }, |ctx, state| {
+        }, |_ctx, _state| {
             Some( BlinkToggle.into() )
         })
         .with_timer_ty::<BlinkingTimer>();

@@ -1,6 +1,6 @@
 extern crate finny;
 
-use finny::{FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull, decl::{BuiltFsm, FsmBuilder}, finny_fsm, inspect::slog::InspectSlog};
+use finny::{FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull, finny_fsm, inspect::slog::InspectSlog};
 use slog::{Drain, o};
 
 #[derive(Default)]
@@ -31,23 +31,23 @@ fn build_fsm(mut fsm: FsmBuilder<StateMachine, MainContext>) -> BuiltFsm {
 
     fsm.sub_machine::<SubStateMachine>()
         .with_context(|ctx| SubContext { value: ctx.sub_enter })
-        .on_entry(|sub, ctx| {
+        .on_entry(|_sub, ctx| {
             ctx.sub_enter += 1;
         })
-        .on_exit(|sub, ctx| {
+        .on_exit(|_sub, ctx| {
             ctx.sub_exit += 1;
         })
         .on_event::<Event>()
         .transition_to::<StateA>()
-        .action(|ev, ctx, from, to| {
+        .action(|_ev, _ctx, _from, to| {
             to.value += 1;
         });
 
     fsm.sub_machine::<SubStateMachine>()
         .on_event::<EventSub>()
         .self_transition()
-        .guard(|ev, ctx, _| ev.n > 0)
-        .action(|ev, ctx, state| {
+        .guard(|ev, _ctx, _| ev.n > 0)
+        .action(|_ev, ctx, _state| {
             ctx.context.sub_action += 1;
         });
 
@@ -84,7 +84,7 @@ fn build_sub_fsm(mut fsm: FsmBuilder<SubStateMachine, SubContext>) -> BuiltFsm {
             state.value += 1;
         }).on_event::<SubEvent>()
         .transition_to::<SubStateB>()
-        .action(|ev, ctx, state_a, state_b| {
+        .action(|_ev, _ctx, state_a, _state_b| {
             state_a.value += 1;
         });
 
@@ -115,7 +115,7 @@ fn build_second_sub_fsm(mut fsm: FsmBuilder<SecondSubStateMachine, SecondSubCont
             state.value += 1;
         }).on_event::<SecondSubEvent>()
         .transition_to::<SecondSubStateB>()
-        .action(|ev, ctx, state_a, state_b| {
+        .action(|_ev, _ctx, state_a, _state_b| {
             state_a.value += 1;
         });
 

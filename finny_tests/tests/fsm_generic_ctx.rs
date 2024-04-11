@@ -1,4 +1,4 @@
-use finny::{FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}, finny_fsm};
+use finny::{FsmFactory, FsmResult, finny_fsm};
 use std::{fmt::Debug, ops::AddAssign};
 
 extern crate finny;

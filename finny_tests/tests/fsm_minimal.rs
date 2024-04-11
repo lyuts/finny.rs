@@ -1,4 +1,4 @@
-use finny::{FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}, finny_fsm};
+use finny::{FsmFactory, finny_fsm};
 
 #[derive(Default, Debug)]
 struct State {

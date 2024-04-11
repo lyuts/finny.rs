@@ -3,7 +3,7 @@ name = "finny_tests"
 version = "0.1.0"
 authors = ["Rudi Benkovic <rudi.benkovic@gmail.com>"]
 publish = false
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 finny = { path = "../finny/" }

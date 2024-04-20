@@ -1,29 +1,38 @@
 //! An example Finny use case that showcases the generated documentation.
 
+#![warn(missing_docs)]
+
 use finny::finny_fsm;
 
 extern crate finny;
 
+/// State machine context
 #[derive(Debug, Default)]
 pub struct StateMachineContext {
     count: usize,
     total_time: usize,
 }
 
+/// State A
 #[derive(Default)]
 pub struct StateA {
     enter: usize,
     exit: usize,
 }
+
+/// State B
 #[derive(Default)]
 pub struct StateB {
     counter: usize,
 }
 
+/// Click event
 #[derive(Clone)]
 pub struct EventClick {
     time: usize,
 }
+
+/// Enter event
 #[derive(Clone)]
 pub struct EventEnter;
 

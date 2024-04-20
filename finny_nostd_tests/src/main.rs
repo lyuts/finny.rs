@@ -1,6 +1,8 @@
 // disabling until no_std + alloc becomes stable
 // #![no_std]
 
+#![warn(missing_docs)]
+
 use finny::{finny_fsm, inspect::null::InspectNull, FsmEventQueueArray, FsmFactory, FsmTimersNull};
 
 pub fn main() {

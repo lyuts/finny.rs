@@ -4,7 +4,7 @@ use crate::{
     codegen_meta::generate_fsm_meta,
     fsm::FsmTypes,
     parse::{FsmState, FsmStateAction, FsmStateKind},
-    utils::{remap_closure_inputs, to_field_name, tokens_to_string},
+    utils::{get_ty_ident, remap_closure_inputs, to_field_name, tokens_to_string},
 };
 use proc_macro2::TokenStream;
 use quote::{quote, TokenStreamExt};
@@ -47,6 +47,7 @@ pub fn generate_fsm_code(
             let state_ty = FsmTypes::new(&state.ty, &fsm.base.fsm_generics);
             let ty = state_ty.get_fsm_ty();
             let ty_name = state_ty.get_fsm_no_generics_ty();
+            let _field_name_str = get_ty_ident(&ty);
 
             for timer in &state.timers {
                 let timer_ty = timer.get_ty(&fsm.base);
@@ -57,12 +58,14 @@ pub fn generate_fsm_code(
 
                 state_accessors.append_all(quote! {
                     impl #fsm_generics_impl core::convert::AsRef<#timer_ty #fsm_generics_type> for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                        /// Convert to a shared reference.
                         fn as_ref(&self) -> & #timer_ty #fsm_generics_type {
                             &self. #timer_field
                         }
                     }
 
                     impl #fsm_generics_impl core::convert::AsMut<#timer_ty #fsm_generics_type> for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                        /// Convert to a mutable reference.
                         fn as_mut(&mut self) -> &mut #timer_ty #fsm_generics_type {
                             &mut self. #timer_field
                         }
@@ -70,8 +73,14 @@ pub fn generate_fsm_code(
                 });
             }
 
-            code_fields.append_all(quote! { #name: #ty, });
-            state_variants.append_all(quote! { #ty_name, });
+            code_fields.append_all(quote! {
+                /// state storage struct field
+                #name: #ty,
+            });
+            state_variants.append_all(quote! {
+                /// state variant
+                #ty_name,
+            });
 
             let new_state_field = match state.kind {
                 FsmStateKind::Normal => {
@@ -116,12 +125,14 @@ pub fn generate_fsm_code(
 
             state_accessors.append_all(quote! {
                 impl #fsm_generics_impl core::convert::AsRef<#ty> for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                    /// Convert to a shared reference.
                     fn as_ref(&self) -> & #ty {
                         &self. #name
                     }
                 }
 
                 impl #fsm_generics_impl core::convert::AsMut<#ty> for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                    /// Convert to a mutable reference.
                     fn as_mut(&mut self) -> &mut #ty {
                         &mut self. #name
                     }
@@ -152,6 +163,7 @@ pub fn generate_fsm_code(
 
                                 transition_states.append_all(quote! {
                                     impl #fsm_generics_impl finny::FsmStateTransitionAsMut<#state_from_ty, #state_to_ty> for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                                        /// Convert to mutable reference.
                                         fn as_state_transition_mut(&mut self) -> (&mut #state_from_ty, &mut #state_to_ty) {
                                             (&mut self. #state_from_field, &mut self. #state_to_field)
                                         }
@@ -174,6 +186,7 @@ pub fn generate_fsm_code(
             }
 
             impl #fsm_generics_impl finny::FsmStateFactory< #fsm_ty #fsm_generics_type > for #states_store_ty #fsm_generics_type #fsm_generics_where {
+                /// Construct new state.
                 fn new_state(context: & #ctx_ty ) -> finny::FsmResult<Self> {
                     let s = Self {
                         #new_state_fields
@@ -183,6 +196,7 @@ pub fn generate_fsm_code(
                 }
             }
 
+            /// States
             #[derive(Copy, Clone, Debug, PartialEq)]
             pub enum #states_enum_ty {
                 #state_variants
@@ -217,7 +231,10 @@ pub fn generate_fsm_code(
         for (ty, _ev) in fsm.fsm.events.iter() {
             let ty_str = crate::utils::tokens_to_string(ty);
 
-            variants.append_all(quote! { #ty ( #ty ),  });
+            variants.append_all(quote! {
+                /// event variant
+                #ty ( #ty ),
+            });
             as_ref_str.append_all(quote! { #event_enum_ty:: #ty(_) => #ty_str, });
             i += 1;
         }
@@ -261,6 +278,7 @@ pub fn generate_fsm_code(
         };
 
         let evs = quote! {
+            /// Events definitions
             #[derive(finny::bundled::derive_more::From)]
             #[derive(Clone)]
             #derives
@@ -269,6 +287,7 @@ pub fn generate_fsm_code(
             }
 
             impl core::convert::AsRef<str> for #event_enum_ty {
+                /// Convert to a shared reference.
                 fn as_ref(&self) -> &'static str {
                     #as_ref_str
                 }
@@ -327,6 +346,7 @@ pub fn generate_fsm_code(
 
                             let g = quote! {
                                 impl #fsm_generics_impl finny::FsmTransitionGuard<#fsm_ty #fsm_generics_type, #event_ty> for #ty #fsm_generics_where {
+                                    /// State transition guard
                                     fn guard<'fsm_event, Q>(event: & #event_ty, context: &finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q>, states: & #states_store_ty #fsm_generics_type ) -> bool
                                         where Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>
                                     {
@@ -362,12 +382,15 @@ pub fn generate_fsm_code(
                         let state_ty = &state.ty;
                         q.append_all(quote! {
                             impl #fsm_generics_impl finny::FsmAction<#fsm_ty #fsm_generics_type, #event_ty, #state_ty > for #ty #fsm_generics_where {
+                                /// Business logic to execute on a transition between states.
                                 fn action<'fsm_event, Q>(event: & #event_ty , context: &mut finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q >, state: &mut #state_ty)
                                     where Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>
                                 {
                                     #action_body
                                 }
 
+                                /// Returns true if the source state, and target states are the
+                                /// same.
                                 fn should_trigger_state_actions() -> bool {
                                     #is_self_transition
                                 }
@@ -421,6 +444,7 @@ pub fn generate_fsm_code(
 
                             let g = quote! {
                                 impl #fsm_generics_impl finny::FsmTransitionGuard<#fsm_ty #fsm_generics_type, #event_ty> for #ty #fsm_generics_where {
+                                    /// State transition guard
                                     fn guard<'fsm_event, Q>(event: & #event_ty, context: &finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q>, states: & #states_store_ty #fsm_generics_type) -> bool
                                         where Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>
                                     {
@@ -463,6 +487,7 @@ pub fn generate_fsm_code(
 
                         let a = quote! {
                             impl #fsm_generics_impl finny::FsmTransitionAction<#fsm_ty #fsm_generics_type, #event_ty, #state_from_ty, #state_to_ty> for #ty #fsm_generics_where {
+                                /// Business logic to execute on a transition between states.
                                 fn action<'fsm_event, Q>(event: & #event_ty , context: &mut finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q >, from: &mut #state_from_ty, to: &mut #state_to_ty)
                                     where Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>
                                 {
@@ -478,6 +503,7 @@ pub fn generate_fsm_code(
                 transition_doc.push_str(&format!(" Part of [{}].", tokens_to_string(fsm_ty)));
 
                 q.append_all(quote! {
+                    /// Event
                     #[doc = #transition_doc ]
                     pub struct #ty;
                 });
@@ -839,14 +865,17 @@ pub fn generate_fsm_code(
             let state = quote! {
 
                 impl #fsm_generics_impl finny::FsmState<#fsm_ty #fsm_generics_type> for #ty #fsm_generics_where {
+                    /// Code to execute on entering a state that fsm just transitioned to.
                     fn on_entry<'fsm_event, Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>>(&mut self, context: &mut finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q>) {
                         #on_entry
                     }
 
+                    /// Code to execute on entering a state that fsm just transitioned from.
                     fn on_exit<'fsm_event, Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>>(&mut self, context: &mut finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q>) {
                         #on_exit
                     }
 
+                    /// Return current state.
                     fn fsm_state() -> #states_enum_ty {
                         #states_enum_ty :: #variant
                     }
@@ -871,6 +900,7 @@ pub fn generate_fsm_code(
             impl #fsm_generics_impl finny::FsmFactory for #fsm_ty #fsm_generics_type #fsm_generics_where {
                 type Fsm = #fsm_ty #fsm_generics_type;
 
+                /// Construct submachine backend.
                 fn new_submachine_backend(backend: finny::FsmBackendImpl<Self::Fsm>) -> finny::FsmResult<Self> where Self: Sized {
                     Ok(Self {
                         backend
@@ -881,12 +911,14 @@ pub fn generate_fsm_code(
             impl #fsm_generics_impl core::ops::Deref for #fsm_ty #fsm_generics_type #fsm_generics_where {
                 type Target = finny::FsmBackendImpl<#fsm_ty #fsm_generics_type >;
 
+                /// Dereferences the value.
                 fn deref(&self) -> &Self::Target {
                     &self.backend
                 }
             }
 
             impl #fsm_generics_impl core::ops::DerefMut for #fsm_ty #fsm_generics_type #fsm_generics_where {
+                /// Mutably dereferences the value.
                 fn deref_mut(&mut self) -> &mut Self::Target {
                     &mut self.backend
                 }
@@ -908,12 +940,16 @@ pub fn generate_fsm_code(
                 let sub_fsm_ty = FsmTypes::new(&state.ty, &fsm.base.fsm_generics);
                 let n = sub_fsm_ty.get_fsm_no_generics_ty();
                 let t = sub_fsm_ty.get_fsm_timers_ty();
-                enum_variants.push(quote! { #n ( #t )  });
+                enum_variants.push(quote! {
+                    /// submachine's state variant
+                    #n ( #t )
+                });
                 submachines.push(sub_fsm_ty.clone());
 
                 code.append_all(quote! {
 
                     impl From<#t> for #timers_enum_ty {
+                        /// Converts X from Y. TODO: figure out conversion details.
                         fn from(t: #t) -> Self {
                             #timers_enum_ty :: #n ( t )
                         }
@@ -925,8 +961,10 @@ pub fn generate_fsm_code(
             for timer in &state.timers {
                 let state_ty = &state.ty;
                 let timer_ty = timer.get_ty(&fsm.base);
-
-                enum_variants.push(quote! { #timer_ty });
+                enum_variants.push(quote! {
+                    /// timer variant
+                    #timer_ty
+                });
                 our_timers.push(timer_ty.clone());
 
                 let setup = remap_closure_inputs(
@@ -949,13 +987,14 @@ pub fn generate_fsm_code(
 
                 code.append_all(quote! {
 
+                    /// Timer
                     #[doc = #timer_doc ]
-
                     pub struct #timer_ty #fsm_generics_type #fsm_generics_where {
                         instance: Option<finny::TimerInstance < #fsm_ty #fsm_generics_type > >
                     }
 
                     impl #fsm_generics_impl core::default::Default for #timer_ty #fsm_generics_type #fsm_generics_where {
+                        /// Construct default timer.
                         fn default() -> Self {
                             Self {
                                 instance: None
@@ -964,6 +1003,7 @@ pub fn generate_fsm_code(
                     }
 
                     impl #fsm_generics_impl finny::FsmTimer< #fsm_ty #fsm_generics_type , #state_ty > for #timer_ty #fsm_generics_type #fsm_generics_where {
+                        /// Timer configuration.
                         fn setup(ctx: &mut #ctx_ty, settings: &mut finny::TimerFsmSettings) {
                             #setup
                             {
@@ -971,6 +1011,7 @@ pub fn generate_fsm_code(
                             }
                         }
 
+                        /// Trigger timer event.
                         fn trigger(ctx: & #ctx_ty, state: & #state_ty ) -> Option< #event_enum_ty > {
                             #trigger
                             let ret = {
@@ -979,10 +1020,12 @@ pub fn generate_fsm_code(
                             ret
                         }
 
+                        /// Get timer instance.
                         fn get_instance(&self) -> &Option<finny::TimerInstance < #fsm_ty #fsm_generics_type > > {
                             &self.instance
                         }
 
+                        /// Get mutable timer instance.
                         fn get_instance_mut(&mut self) -> &mut Option<finny::TimerInstance < #fsm_ty #fsm_generics_type > > {
                             &mut self.instance
                         }
@@ -999,6 +1042,7 @@ pub fn generate_fsm_code(
         };
 
         code.append_all(quote! {
+            /// Timers
             #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
             pub enum #timers_enum_ty {
                 #variants
@@ -1071,17 +1115,20 @@ pub fn generate_fsm_code(
             impl finny::AllVariants for #timers_enum_ty {
                 type Iter = #timers_enum_iter_ty;
 
+                /// Create iterator over timer events.
                 fn iter() -> #timers_enum_iter_ty {
                     #timers_enum_iter_ty::new()
                 }
             }
 
+            /// Timer iterator
             pub struct #timers_enum_iter_ty {
                 position: usize,
                 #submachine_iter_struct
             }
 
             impl #timers_enum_iter_ty {
+                /// Create iterator.
                 pub fn new() -> Self {
                     Self {
                         position: 0,
@@ -1093,6 +1140,7 @@ pub fn generate_fsm_code(
             impl core::iter::Iterator for #timers_enum_iter_ty {
                 type Item = #timers_enum_ty;
 
+                /// Advances iterator to the next value.
                 fn next(&mut self) -> Option<Self::Item> {
                     match self.position {
                         #enum_iter_matches
@@ -1178,12 +1226,14 @@ pub fn generate_fsm_code(
 
         code.append_all(quote! {
 
+            /// Timer storage
             pub struct #timers_storage_ty<TTimerStorage> {
                 _storage: core::marker::PhantomData<TTimerStorage>,
                 #fields
             }
 
             impl<TTimerStorage> core::default::Default for #timers_storage_ty<TTimerStorage> {
+                /// Construct default timer storage.
                 fn default() -> Self {
                     Self {
                         _storage: core::marker::PhantomData::default(),
@@ -1194,6 +1244,7 @@ pub fn generate_fsm_code(
 
             impl<TTimerStorage> finny::TimersStorage<#timers_enum_ty , TTimerStorage> for #timers_storage_ty<TTimerStorage>
             {
+                /// Get mutable timer storage.
                 fn get_timer_storage_mut(&mut self, id: & #timers_enum_ty ) -> &mut Option<TTimerStorage> {
                     #matches
                 }
@@ -1229,6 +1280,7 @@ pub fn generate_fsm_code(
                         #fsm_generics_where
                     {
 
+                        /// Reset FSM to its initial state.
                         fn reset<I>(backend: &mut finny::FsmBackendImpl< #fsm_ty #fsm_generics_type >, inspect_event_ctx: &mut I)
                             where I: finny::Inspect
                         {

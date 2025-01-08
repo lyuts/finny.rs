@@ -18,7 +18,7 @@ generate_plantuml = []
 
 [dependencies]
 quote = "1.0"
-syn =  { version = "1.0", features = ["full", "extra-traits", "visit"] }
+syn =  { version = "2.0", features = ["full", "extra-traits", "visit"] }
 proc-macro2 = "1.0"
 petgraph = "0.5"
 serde = { version = "1.0", features = ["derive"] }

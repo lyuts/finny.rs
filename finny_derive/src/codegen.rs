@@ -870,7 +870,7 @@ pub fn generate_fsm_code(
                         #on_entry
                     }
 
-                    /// Code to execute on entering a state that fsm just transitioned from.
+                    /// Code to execute when transitioning out of the source state.
                     fn on_exit<'fsm_event, Q: finny::FsmEventQueue<#fsm_ty #fsm_generics_type>>(&mut self, context: &mut finny::EventContext<'fsm_event, #fsm_ty #fsm_generics_type, Q>) {
                         #on_exit
                     }

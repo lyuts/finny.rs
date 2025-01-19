@@ -24,4 +24,6 @@ jobs:
       run: cargo test --verbose
     - name: Run no_std test
       run: cd finny_nostd_tests && cargo build && cargo run
+    - name: Generate documentation and run doc tests.
+      run: cargo doc --no-deps
 

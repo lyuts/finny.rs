@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  linux_build:
+  build:
     runs-on: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:

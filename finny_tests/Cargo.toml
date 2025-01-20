@@ -6,7 +6,9 @@ publish = false
 edition = "2021"
 
 [dependencies]
-finny = { path = "../finny/" }
+finny = { path = "../finny/", features = ["inspect_tracing"] }
 slog = "2.7"
 slog-term = "2.6"
 slog-async = "2.6"
+tracing = "0.1"
+tracing-subscriber = "0.3"

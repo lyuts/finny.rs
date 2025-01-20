@@ -15,11 +15,13 @@ derive_more = "0.99"
 finny_derive = { path = "../finny_derive", version = "0.2.0" }
 arraydeque = { version = "0.4", default-features = false }
 slog = { version = "2.7", optional = true, default-features = false }
+tracing = { version = "0.1", optional = true, default-features = false }
 heapless = { version = "0.7" }
 
 [features]
 default = ["std", "inspect_slog", "timers_std"]
 std = ["arraydeque/std", "timers_std", "slog/std", "finny_derive/std"]
 inspect_slog = ["slog"]
+inspect_tracing = ["tracing"]
 timers_std = []
 generate_plantuml = ["finny_derive/generate_plantuml"]

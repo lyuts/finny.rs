@@ -1,6 +1,9 @@
 extern crate finny;
 
-use std::{thread::sleep, time::Duration};
+use std::{
+    thread::sleep,
+    time::{Duration, Instant},
+};
 
 use finny::{
     finny_fsm, inspect::slog::InspectSlog, timers::std::TimersStd, AllVariants, FsmCurrentState,
@@ -31,6 +34,10 @@ pub struct EventTimer {
 // #[derive(Clone, Debug)]
 // pub struct EventEnter { shift: bool }
 
+const T1_DURATION: u64 = 100;
+const T2_DURATION: u64 = 200;
+const BLINK_DURATION: u64 = 100;
+
 #[finny_fsm]
 fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltFsm {
     fsm.events_debug();
@@ -60,7 +67,7 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
     fsm.state::<StateA>()
         .on_entry_start_timer(
             |_ctx, timer| {
-                timer.timeout = Duration::from_millis(100);
+                timer.timeout = Duration::from_millis(T1_DURATION);
                 timer.renew = true;
                 timer.cancel_on_state_exit = true;
             },
@@ -71,7 +78,7 @@ fn build_fsm(mut fsm: FsmBuilder<TimersMachine, TimersMachineContext>) -> BuiltF
     fsm.state::<StateA>()
         .on_entry_start_timer(
             |_ctx, timer| {
-                timer.timeout = Duration::from_millis(200);
+                timer.timeout = Duration::from_millis(T2_DURATION);
                 timer.renew = false;
                 timer.cancel_on_state_exit = true;
             },
@@ -119,7 +126,7 @@ fn build_blinker_fsm(mut fsm: FsmBuilder<BlinkerMachine, BlinkerContext>) -> Bui
     fsm.state::<BlinkingOn>()
         .on_entry_start_timer(
             |_ctx, settings| {
-                settings.timeout = Duration::from_millis(100);
+                settings.timeout = Duration::from_millis(BLINK_DURATION);
                 settings.renew = true;
             },
             |_ctx, _state| Some(BlinkToggle.into()),
@@ -163,17 +170,27 @@ fn test_timers_fsm() -> FsmResult<()> {
 
     fsm.start()?;
 
+    let start = Instant::now();
     sleep(Duration::from_millis(450));
-
+    let elapsed1 = start.elapsed();
     fsm.dispatch_timer_events()?;
 
+    let expected_timers_1: usize = elapsed1.as_millis().div_euclid(T1_DURATION.into()) as usize;
+    // 2nd timer is a one shot timer.
+    let expected_timers_2: usize = 1;
+    let expected_timers = expected_timers_1 + expected_timers_2;
     let state_a: &StateA = fsm.get_state();
-    assert_eq!(5, state_a.timers);
+    assert_eq!(expected_timers, state_a.timers);
     fsm.dispatch(EventClick)?;
 
+    let start = Instant::now();
     sleep(Duration::from_millis(200));
-
+    let elapsed2 = start.elapsed();
     fsm.dispatch_timer_events()?;
+
+    let expected_toggles: usize = (elapsed1.as_millis().div_euclid(BLINK_DURATION.into())
+        + elapsed2.as_millis().div_euclid(BLINK_DURATION.into()))
+        as usize;
 
     assert_eq!(
         FsmCurrentState::State(TimersMachineCurrentState::StateB),
@@ -181,11 +198,11 @@ fn test_timers_fsm() -> FsmResult<()> {
     );
 
     let state_a: &StateA = fsm.get_state();
-    assert_eq!(5, state_a.timers);
+    assert_eq!(expected_timers, state_a.timers);
     assert_eq!(true, fsm.exit_a);
 
     let sub_machine: &BlinkerMachine = fsm.get_state();
-    assert_eq!(6, sub_machine.toggles);
+    assert_eq!(expected_toggles, sub_machine.toggles);
 
     Ok(())
 }

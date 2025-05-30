@@ -126,25 +126,23 @@ mod queue_vec_shared {
 pub use self::queue_vec_shared::*;
 
 mod queue_array {
-    use arraydeque::{Array, ArrayDeque};
+    use arraydeque::ArrayDeque;
 
     use super::*;
 
     /// A heapless queue with a fixed size. Implemented using the `arraydequeue` crate.
-    pub struct FsmEventQueueArray<F, A>
+    pub struct FsmEventQueueArray<F, const CAP: usize>
     where
         F: FsmBackend,
-        A: Array<Item = <F as FsmBackend>::Events>,
         Self: Sized,
     {
-        dequeue: ArrayDeque<A>,
+        dequeue: ArrayDeque<<F as FsmBackend>::Events, CAP>,
         _fsm: PhantomData<F>,
     }
 
-    impl<F, A> FsmEventQueueArray<F, A>
+    impl<F, const CAP: usize> FsmEventQueueArray<F, CAP>
     where
         F: FsmBackend,
-        A: Array<Item = <F as FsmBackend>::Events>,
     {
         pub fn new() -> Self {
             Self {
@@ -154,10 +152,9 @@ mod queue_array {
         }
     }
 
-    impl<F, A> FsmEventQueue<F> for FsmEventQueueArray<F, A>
+    impl<F, const CAP: usize> FsmEventQueue<F> for FsmEventQueueArray<F, CAP>
     where
         F: FsmBackend,
-        A: Array<Item = <F as FsmBackend>::Events>,
     {
         fn dequeue(&mut self) -> Option<<F as FsmBackend>::Events> {
             self.dequeue.pop_front()
@@ -168,10 +165,9 @@ mod queue_array {
         }
     }
 
-    impl<F, A> FsmEventQueueSender<F> for FsmEventQueueArray<F, A>
+    impl<F, const CAP: usize> FsmEventQueueSender<F> for FsmEventQueueArray<F, CAP>
     where
         F: FsmBackend,
-        A: Array<Item = <F as FsmBackend>::Events>,
     {
         fn enqueue<E: Into<<F as FsmBackend>::Events>>(&mut self, event: E) -> FsmResult<()> {
             match self.dequeue.push_back(event.into()) {
@@ -337,7 +333,14 @@ fn test_dequeue_vec() {
 
 #[test]
 fn test_array() {
-    let queue = FsmEventQueueArray::<TestFsm, [_; 16]>::new();
+    let queue = FsmEventQueueArray::<TestFsm, 16>::new();
+    test_queue(queue);
+}
+
+#[test]
+#[should_panic]
+fn test_array_insufficient_capacity() {
+    let queue = FsmEventQueueArray::<TestFsm, 1>::new();
     test_queue(queue);
 }
 

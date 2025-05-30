@@ -3,17 +3,16 @@
 
 use crate::lib::*;
 use crate::{AllVariants, FsmBackend, FsmTimers, TimersStorage};
-use arraydeque::{Array, ArrayDeque};
+use arraydeque::ArrayDeque;
 use Duration;
 
-pub struct TimersCore<F, S, Q>
+pub struct TimersCore<F, S, const CAP: usize>
 where
     F: FsmBackend,
-    Q: Array<Item = <F as FsmBackend>::Timers>,
     S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
     timers: S,
-    pending_events: ArrayDeque<Q>,
+    pending_events: ArrayDeque<<F as FsmBackend>::Timers, CAP>,
     _fsm: PhantomData<F>,
 }
 
@@ -28,10 +27,9 @@ pub enum CoreTimer {
     },
 }
 
-impl<F, S, Q> TimersCore<F, S, Q>
+impl<F, S, const CAP: usize> TimersCore<F, S, CAP>
 where
     F: FsmBackend,
-    Q: Array<Item = <F as FsmBackend>::Timers>,
     S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
     pub fn new(timers: S) -> Self {
@@ -46,6 +44,9 @@ where
         let iter = <F as FsmBackend>::Timers::iter();
         for id in iter {
             let timer = self.timers.get_timer_storage_mut(&id);
+            if self.pending_events.is_full() {
+                panic!("Events queue is full. This is unexpected!");
+            }
 
             // todo: account for the difference between time remaining and elapsed time, currently we just reset it
             match timer {
@@ -74,10 +75,9 @@ where
     }
 }
 
-impl<F, S, Q> FsmTimers<F> for TimersCore<F, S, Q>
+impl<F, S, const CAP: usize> FsmTimers<F> for TimersCore<F, S, CAP>
 where
     F: FsmBackend,
-    Q: Array<Item = <F as FsmBackend>::Timers>,
     S: TimersStorage<<F as FsmBackend>::Timers, CoreTimer>,
 {
     fn create(

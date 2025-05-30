@@ -13,7 +13,7 @@ readme = "../README.md"
 [dependencies]
 derive_more = "0.99"
 finny_derive = { path = "../finny_derive", version = "0.2.0" }
-arraydeque = { version = "0.4", default-features = false }
+arraydeque = { version = "0.5", default-features = false }
 slog = { version = "2.7", optional = true, default-features = false }
 tracing = { version = "0.1", optional = true, default-features = false }
 heapless = { version = "0.8" }

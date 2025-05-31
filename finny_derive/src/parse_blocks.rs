@@ -1,4 +1,4 @@
-use syn::{spanned::Spanned, Expr, ExprMethodCall, AngleBracketedGenericArguments};
+use syn::{spanned::Spanned, AngleBracketedGenericArguments, Expr, ExprMethodCall};
 
 use crate::parse::FsmFnBase;
 
@@ -104,7 +104,9 @@ pub fn flatten_method_calls(mc: &ExprMethodCall) -> syn::Result<Vec<ExprMethodCa
     Ok(ret)
 }
 
-pub fn get_generics(turbofish: &Option<AngleBracketedGenericArguments>) -> syn::Result<Vec<syn::Type>> {
+pub fn get_generics(
+    turbofish: &Option<AngleBracketedGenericArguments>,
+) -> syn::Result<Vec<syn::Type>> {
     let mut ret = vec![];
 
     if let Some(turbofish) = turbofish {

@@ -1,5 +1,8 @@
 use finny::inspect::tracing::InspectTracing;
-use finny::{finny_fsm, timers::std::TimersStd, FsmEventQueueVec, FsmFactory, FsmResult};
+use finny::{
+    bundled::derive_more, finny_fsm, timers::std::TimersStd, FsmEventQueueVec, FsmFactory,
+    FsmResult,
+};
 use tracing::{info, Level};
 
 #[derive(Default)]

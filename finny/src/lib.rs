@@ -96,6 +96,14 @@ pub mod bundled {
     /// Derive_more crate for deriving the enum conversions.
     pub mod derive_more {
         pub use crate::derive_more::From;
+        // This is a hack to make migration to derive_more 2.x transparent to consumers of this
+        // crate. derive_more generates trait implementations that look like this:
+        // 
+        // impl derive_more::core::convert::From<(Event1)> for MyFsmEvents {
+        //
+        // and the following re-export allows to make the compilation possible without requiring
+        // finny's consumers to take direct dependency on derive_more.
+        pub use core;
     }
 }
 

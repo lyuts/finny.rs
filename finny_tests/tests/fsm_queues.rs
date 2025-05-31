@@ -1,6 +1,6 @@
 extern crate finny;
 
-use finny::{finny_fsm, FsmCurrentState, FsmFactory, FsmResult};
+use finny::{bundled::derive_more, finny_fsm, FsmCurrentState, FsmFactory, FsmResult};
 
 #[derive(Default)]
 pub struct StateA {

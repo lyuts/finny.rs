@@ -2,6 +2,7 @@
 
 #![warn(missing_docs)]
 
+use finny::bundled::derive_more;
 use finny::finny_fsm;
 
 extern crate finny;

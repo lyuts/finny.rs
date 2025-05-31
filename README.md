@@ -27,7 +27,7 @@ finny = "0.2"
 #### Code
 
 ```rust
-use finny::{finny_fsm, FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}};
+use finny::{bundled::derive_more, finny_fsm, FsmFactory, FsmResult, decl::{BuiltFsm, FsmBuilder}};
 
 // The context is shared between all guards, actions and transitions. Generics are supported here!
 #[derive(Default)]

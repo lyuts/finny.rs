@@ -1,4 +1,4 @@
-use finny::{finny_fsm, FsmFactory, FsmResult};
+use finny::{bundled::derive_more, finny_fsm, FsmFactory, FsmResult};
 use std::{fmt::Debug, ops::AddAssign};
 
 extern crate finny;

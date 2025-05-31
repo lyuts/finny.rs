@@ -1,8 +1,8 @@
 extern crate finny;
 
 use finny::{
-    finny_fsm, inspect::slog::InspectSlog, FsmCurrentState, FsmError, FsmEventQueueVec, FsmFactory,
-    FsmResult, FsmTimersNull,
+    bundled::derive_more, finny_fsm, inspect::slog::InspectSlog, FsmCurrentState, FsmError,
+    FsmEventQueueVec, FsmFactory, FsmResult, FsmTimersNull,
 };
 use slog::{o, Drain};
 

@@ -6,8 +6,8 @@ use std::{
 };
 
 use finny::{
-    finny_fsm, inspect::slog::InspectSlog, timers::std::TimersStd, AllVariants, FsmCurrentState,
-    FsmEventQueueVec, FsmFactory, FsmResult,
+    bundled::derive_more, finny_fsm, inspect::slog::InspectSlog, timers::std::TimersStd,
+    AllVariants, FsmCurrentState, FsmEventQueueVec, FsmFactory, FsmResult,
 };
 use slog::{o, Drain};
 

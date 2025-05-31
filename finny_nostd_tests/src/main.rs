@@ -14,7 +14,7 @@ pub fn main() {
 
     {
         let ctx = StateMachineContext::default();
-        let queue = FsmEventQueueArray::<_, [_; 16]>::new();
+        let queue = FsmEventQueueArray::<_, 16>::new();
         let inspect = InspectNull::new();
         let timers = FsmTimersNull;
         let mut fsm = StateMachine::new_with(ctx, queue, inspect, timers).unwrap();

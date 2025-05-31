@@ -63,7 +63,7 @@ pub fn create_regions(
         while let Some(idx) = dfs.next(&graph) {
             if idx != start_node && graph[idx].region.is_some() {
                 let s = &graph[idx].state;
-                return Err(syn::Error::new(s.span(), &format!("The state '{}' was already matched into another region, check the transition graph of the states!",
+                return Err(syn::Error::new(s.span(), format!("The state '{}' was already matched into another region, check the transition graph of the states!",
                 tokens_to_string(s))));
             }
             graph[idx].region = Some(region_id);
@@ -71,7 +71,7 @@ pub fn create_regions(
     }
 
     for node in graph.raw_nodes() {
-        if node.weight.region == None {
+        if node.weight.region.is_none() {
             return Err(syn::Error::new(
                 node.weight.state.span(),
                 "Unreachable state! Add some transitions that will make this state reachable!",
@@ -93,7 +93,7 @@ pub fn create_regions(
             let mut transitions = vec![];
             for transition in &decl.transitions {
                 let states = transition.ty.get_states();
-                if states.len() == 0 {
+                if states.is_empty() {
                     return Err(syn::Error::new(
                         Span::call_site(),
                         "No states for this transition found, codegen bug!",

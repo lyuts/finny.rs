@@ -91,12 +91,8 @@ where
     /// Dispatch any pending timer events into the queue, then run all the
     /// events from the queue until completition.
     pub fn dispatch_timer_events(&mut self) -> FsmResult<()> {
-        loop {
-            if let Some(timer_id) = self.timers.get_triggered_timer() {
-                self.dispatch_single_event(FsmEvent::Timer(timer_id))?;
-            } else {
-                break;
-            }
+        while let Some(timer_id) = self.timers.get_triggered_timer() {
+            self.dispatch_single_event(FsmEvent::Timer(timer_id))?;
         }
 
         self.dispatch_queue()
@@ -132,7 +128,7 @@ where
     /// Dispatch the entire event queue and run it to completition.
     pub fn dispatch_queue(&mut self) -> FsmResult<()> {
         while let Some(ev) = self.queue.dequeue() {
-            let ev: <F as FsmBackend>::Events = ev.into();
+            let ev: <F as FsmBackend>::Events = ev;
             // todo: log?
             let _ = Self::dispatch(self, ev);
         }

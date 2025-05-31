@@ -53,7 +53,7 @@ pub fn decode_method_call(base: &FsmFnBase, expr: &Expr) -> syn::Result<FsmBlock
 
     Ok(FsmBlockMethodCall {
         expr_call: mc.clone(),
-        method_calls: flatten_method_calls(&mc)?,
+        method_calls: flatten_method_calls(mc)?,
     })
 }
 

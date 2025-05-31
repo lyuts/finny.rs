@@ -53,7 +53,7 @@ impl FsmParser {
                     let methods = mc
                         .method_calls
                         .iter()
-                        .map(|m| MethodOverview::parse(m))
+                        .map(MethodOverview::parse)
                         .collect::<syn::Result<Vec<_>>>()?;
 
                     let methods: Vec<_> = methods.iter().map(|m| m.as_ref()).collect();
@@ -73,7 +73,7 @@ impl FsmParser {
                             ..
                         }] => {
                             assert_no_generics(ty)?;
-                            if self.initial_states.len() > 0 {
+                            if !self.initial_states.is_empty() {
                                 return Err(syn::Error::new(ty.span(), "Duplicate initial_state!"));
                             }
                             self.initial_states.push(ty.clone());
@@ -83,7 +83,7 @@ impl FsmParser {
                             generics: [ty_tuple],
                             ..
                         }] => {
-                            if self.initial_states.len() > 0 {
+                            if !self.initial_states.is_empty() {
                                 return Err(syn::Error::new(
                                     ty_tuple.span(),
                                     "Duplicate initial_state!",
@@ -112,7 +112,7 @@ impl FsmParser {
                             ..
                         }, st @ ..] => {
                             //assert_no_generics(ty_sub_fsm)?;
-                            let field_name = to_field_name(&ty_sub_fsm);
+                            let field_name = to_field_name(ty_sub_fsm);
 
                             let state = self.states.entry(ty_sub_fsm.clone()).or_insert(FsmState {
                                 ty: ty_sub_fsm.clone(),
@@ -137,7 +137,7 @@ impl FsmParser {
                                     name: "with_context",
                                     ..
                                 }, st @ ..] => {
-                                    let closure = get_closure(&with_context.call)?;
+                                    let closure = get_closure(with_context.call)?;
                                     if sub_options.context_constructor.is_some() {
                                         return Err(syn::Error::new(
                                             closure.span(),
@@ -146,10 +146,10 @@ impl FsmParser {
                                     }
                                     sub_options.context_constructor = Some(closure.clone());
 
-                                    self.state_builder_parser(&ty_sub_fsm, st, true)?;
+                                    self.state_builder_parser(ty_sub_fsm, st, true)?;
                                 }
                                 [st @ ..] => {
-                                    self.state_builder_parser(&ty_sub_fsm, st, true)?;
+                                    self.state_builder_parser(ty_sub_fsm, st, true)?;
                                 }
                                 _ => {
                                     return Err(syn::Error::new(
@@ -297,7 +297,7 @@ impl FsmParser {
     pub fn validate(self, input_fn: &ItemFn) -> syn::Result<ValidatedFsm> {
         let mut transitions = vec![];
 
-        if self.initial_states.len() == 0 {
+        if self.initial_states.is_empty() {
             return Err(syn::Error::new(input_fn.span(), "Missing the initial state declaration! Use the method 'initial_state' or 'initial_states'."));
         }
 
@@ -313,14 +313,14 @@ impl FsmParser {
                 if let Some(type_hint) = ty_hint {
                     type_hint.clone()
                 } else {
-                    *i = *i + 1;
+                    *i += 1;
                     crate::utils::ty_append(&base.fsm_ty, &format!("Transition{}", i))
                 }
             }
 
             // start transition
             for initial_state in &self.initial_states {
-                let fsm_initial_state = self.states.get(&initial_state).ok_or(syn::Error::new(initial_state.span(), "The initial state is not refered in the builder. Use the 'state' method on the builder."))?;
+                let fsm_initial_state = self.states.get(initial_state).ok_or(syn::Error::new(initial_state.span(), "The initial state is not refered in the builder. Use the 'state' method on the builder."))?;
 
                 transitions.push(FsmTransition {
                     transition_ty: generate_transition_ty(&self.base, &mut i, &None),
@@ -424,7 +424,7 @@ impl FsmParser {
         if !is_sub_fsm {
             assert_no_generics(ty_state)?;
         }
-        let field_name = to_field_name(&ty_state);
+        let field_name = to_field_name(ty_state);
         let state = self.states.entry(ty_state.clone()).or_insert(FsmState {
             ty: ty_state.clone(),
             on_entry_closure: None,
@@ -441,7 +441,7 @@ impl FsmParser {
                 MethodOverviewRef {
                     name: "on_entry", ..
                 } => {
-                    let closure = get_closure(&method.call)?;
+                    let closure = get_closure(method.call)?;
 
                     if state.on_entry_closure.is_some() {
                         return Err(syn::Error::new(closure.span(), "Duplicate 'on_entry'!"));
@@ -451,7 +451,7 @@ impl FsmParser {
                 MethodOverviewRef {
                     name: "on_exit", ..
                 } => {
-                    let closure = get_closure(&method.call)?;
+                    let closure = get_closure(method.call)?;
 
                     if state.on_exit_closure.is_some() {
                         return Err(syn::Error::new(closure.span(), "Duplicate 'on_exit'!"));

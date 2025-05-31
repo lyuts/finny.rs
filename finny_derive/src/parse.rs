@@ -82,7 +82,7 @@ impl FsmFnInput {
 
             let generic_tys: Vec<_> = generic_arguments.args.iter().collect();
 
-            let (fsm_ty, context_ty) = match (generic_tys.get(0), generic_tys.get(1)) {
+            let (fsm_ty, context_ty) = match (generic_tys.first(), generic_tys.get(1)) {
                 (Some(GenericArgument::Type(fsm_ty)), Some(GenericArgument::Type(context_ty))) => {
                     Ok((fsm_ty, context_ty))
                 }
@@ -341,6 +341,6 @@ impl FsmDeclarations {
     ) -> syn::Result<ValidatedFsm> {
         let mut parser = FsmParser::new(base.clone());
         parser.parse(input_fn, blocks)?;
-        return parser.validate(input_fn);
+        parser.validate(input_fn)
     }
 }

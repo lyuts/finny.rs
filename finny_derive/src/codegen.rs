@@ -47,7 +47,7 @@ pub fn generate_fsm_code(
             let state_ty = FsmTypes::new(&state.ty, &fsm.base.fsm_generics);
             let ty = state_ty.get_fsm_ty();
             let ty_name = state_ty.get_fsm_no_generics_ty();
-            let _field_name_str = get_ty_ident(&ty);
+            let _field_name_str = get_ty_ident(ty);
 
             for timer in &state.timers {
                 let timer_ty = timer.get_ty(&fsm.base);
@@ -840,10 +840,8 @@ pub fn generate_fsm_code(
         for (ty, state) in fsm.fsm.states.iter() {
             let remap_closure = |c: &Option<syn::ExprClosure>| -> syn::Result<TokenStream> {
                 if let Some(c) = &c {
-                    let remap = remap_closure_inputs(
-                        &c.inputs,
-                        &vec![quote! { self }, quote! { context }],
-                    )?;
+                    let remap =
+                        remap_closure_inputs(&c.inputs, &[quote! { self }, quote! { context }])?;
                     let b = &c.body;
 
                     let q = quote! {
@@ -859,7 +857,7 @@ pub fn generate_fsm_code(
             let on_entry = remap_closure(&state.on_entry_closure)?;
             let on_exit = remap_closure(&state.on_exit_closure)?;
 
-            let state_ty = FsmTypes::new(&ty, &fsm.base.fsm_generics);
+            let state_ty = FsmTypes::new(ty, &fsm.base.fsm_generics);
             let variant = state_ty.get_fsm_no_generics_ty();
 
             let state = quote! {
@@ -1209,7 +1207,7 @@ pub fn generate_fsm_code(
             }
         }));
 
-        let matches = if timers_storage_matches.len() == 0 {
+        let matches = if timers_storage_matches.is_empty() {
             quote! {
                 panic!("Not supported in this FSM.");
             }
@@ -1268,7 +1266,7 @@ pub fn generate_fsm_code(
             })
             .collect();
 
-        if subs.len() == 0 {
+        if subs.is_empty() {
             TokenStream::new()
         } else {
             let mut q = TokenStream::new();
@@ -1297,7 +1295,7 @@ pub fn generate_fsm_code(
         }
     };
 
-    let fsm_meta = generate_fsm_meta(&fsm);
+    let fsm_meta = generate_fsm_meta(fsm);
 
     let q = quote! {
         #states_store
@@ -1329,5 +1327,5 @@ pub fn generate_fsm_code(
     q.append_all(input);
     */
 
-    Ok(q.into())
+    Ok(q)
 }

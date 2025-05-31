@@ -36,10 +36,7 @@ where
     S: Clone + Copy,
 {
     pub fn all_stopped(current_states: &[Self]) -> bool {
-        current_states.iter().all(|s| match s {
-            FsmCurrentState::Stopped => true,
-            _ => false,
-        })
+        current_states.iter().all(|s| matches!(s, FsmCurrentState::Stopped))
     }
 }
 

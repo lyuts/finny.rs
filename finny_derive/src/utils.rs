@@ -11,7 +11,7 @@ pub fn remap_closure_inputs(
     if inputs.len() != access.len() {
         return Err(syn::Error::new(
             inputs.span(),
-            &format!(
+            format!(
                 "Expected {} closure arguments, actually have {}.",
                 access.len(),
                 inputs.len()
@@ -156,7 +156,7 @@ pub fn get_ty_ident(ty: &syn::Type) -> syn::Result<&syn::Ident> {
     match ty {
         syn::Type::Path(syn::TypePath { path, .. }) if path.segments.len() == 1 => {
             let seg = path.segments.first().unwrap();
-            return Ok(&seg.ident);
+            Ok(&seg.ident)
         }
         _ => Err(syn::Error::new(
             ty.span(),

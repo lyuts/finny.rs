@@ -17,22 +17,22 @@ impl Inspect for InspectNull {
         _event: &FsmEvent<<F as FsmBackend>::Events, <F as FsmBackend>::Timers>,
         _fsm: &FsmBackendImpl<F>,
     ) -> Self {
-        Self::default()
+        Self
     }
 
     fn for_transition<T>(&self) -> Self {
-        Self::default()
+        Self
     }
 
     fn for_sub_machine<FSub: FsmBackend>(&self) -> Self {
-        Self::default()
+        Self
     }
 
     fn for_timer<F>(&self, _timer_id: <F as FsmBackend>::Timers) -> Self
     where
         F: FsmBackend,
     {
-        Self::default()
+        Self
     }
 
     fn on_guard<T>(&self, _guard_result: bool) {}

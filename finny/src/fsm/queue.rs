@@ -147,7 +147,7 @@ mod queue_array {
         pub fn new() -> Self {
             Self {
                 dequeue: ArrayDeque::new(),
-                _fsm: PhantomData::default(),
+                _fsm: PhantomData,
             }
         }
     }
@@ -263,7 +263,7 @@ pub struct FsmEventQueueNull<F> {
 impl<F> FsmEventQueueNull<F> {
     pub fn new() -> Self {
         FsmEventQueueNull {
-            _ty: PhantomData::default(),
+            _ty: PhantomData,
         }
     }
 }

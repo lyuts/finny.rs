@@ -49,7 +49,7 @@ where
     pub fn on_event<TEvent>(&self) -> FsmEventBuilderState<TFsm, TContext, TEvent, TSubMachine> {
         FsmEventBuilderState {
             _state_builder: &self._state_builder,
-            _event: PhantomData::default(),
+            _event: PhantomData,
         }
     }
 }

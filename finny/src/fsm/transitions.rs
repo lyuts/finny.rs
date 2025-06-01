@@ -157,14 +157,14 @@ pub trait FsmTransitionFsmStart<F: FsmBackend, TInitialState> {
         if FsmCurrentState::all_stopped(states.as_ref()) {
             let mut queue_adapter = FsmEventQueueSub {
                 parent: context.queue,
-                _parent_fsm: PhantomData::<F>::default(),
-                _sub_fsm: PhantomData::<TInitialState>::default(),
+                _parent_fsm: PhantomData::<F>,
+                _sub_fsm: PhantomData::<TInitialState>,
             };
 
             let mut timers_adapter = FsmTimersSub {
                 parent: context.timers,
-                _parent_fsm: core::marker::PhantomData::<F>::default(),
-                _sub_fsm: core::marker::PhantomData::<TInitialState>::default(),
+                _parent_fsm: core::marker::PhantomData::<F>,
+                _sub_fsm: core::marker::PhantomData::<TInitialState>,
             };
 
             let mut inspect = inspect_event_ctx.for_sub_machine::<TInitialState>();
@@ -254,14 +254,14 @@ pub trait FsmTransitionAction<F: FsmBackend, E, TStateFrom, TStateTo> {
         if FsmCurrentState::all_stopped(states.as_ref()) {
             let mut queue_adapter = FsmEventQueueSub {
                 parent: context.queue,
-                _parent_fsm: PhantomData::<F>::default(),
-                _sub_fsm: PhantomData::<TStateTo>::default(),
+                _parent_fsm: PhantomData::<F>,
+                _sub_fsm: PhantomData::<TStateTo>,
             };
 
             let mut timers_adapter = FsmTimersSub {
                 parent: context.timers,
-                _parent_fsm: core::marker::PhantomData::<F>::default(),
-                _sub_fsm: core::marker::PhantomData::<TStateTo>::default(),
+                _parent_fsm: core::marker::PhantomData::<F>,
+                _sub_fsm: core::marker::PhantomData::<TStateTo>,
             };
 
             let mut inspect = inspect_event_ctx.for_sub_machine::<TStateTo>();

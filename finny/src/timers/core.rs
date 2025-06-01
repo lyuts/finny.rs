@@ -36,7 +36,7 @@ where
         Self {
             timers,
             pending_events: ArrayDeque::new(),
-            _fsm: PhantomData::default(),
+            _fsm: PhantomData,
         }
     }
 

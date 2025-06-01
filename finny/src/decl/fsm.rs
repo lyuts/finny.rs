@@ -32,9 +32,9 @@ where
     /// Adds some information about a state.
     pub fn state<TState>(&mut self) -> FsmStateBuilder<TFsm, TContext, TState> {
         FsmStateBuilder {
-            _state: PhantomData::default(),
-            _fsm: PhantomData::default(),
-            _context: PhantomData::default(),
+            _state: PhantomData,
+            _fsm: PhantomData,
+            _context: PhantomData,
         }
     }
 
@@ -44,13 +44,13 @@ where
         TSubFsm: FsmBackend,
     {
         FsmSubMachineBuilder {
-            _fsm: PhantomData::default(),
-            _ctx: PhantomData::default(),
-            _sub: PhantomData::default(),
+            _fsm: PhantomData,
+            _ctx: PhantomData,
+            _sub: PhantomData,
             _state_builder: FsmStateBuilder {
-                _context: PhantomData::default(),
-                _fsm: PhantomData::default(),
-                _state: PhantomData::default(),
+                _context: PhantomData,
+                _fsm: PhantomData,
+                _state: PhantomData,
             },
         }
     }

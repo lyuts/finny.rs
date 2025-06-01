@@ -97,7 +97,7 @@ where
                 match Self::trigger(&context.backend.context, context.backend.states.as_ref()) {
                     Some(ev) => {
                         let inspect =
-                            inspect.new_event::<F>(&FsmEvent::Event(ev.clone()), &context.backend);
+                            inspect.new_event::<F>(&FsmEvent::Event(ev.clone()), context.backend);
                         match context.queue.enqueue(ev) {
                             Ok(_) => {
                                 inspect.info("The event triggered by the timer was enqueued.");

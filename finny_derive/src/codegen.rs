@@ -748,13 +748,7 @@ pub fn generate_fsm_code(
                 }
 
                 // sub machines
-                for state in region.states.iter().filter(|s| {
-                    if let FsmStateKind::SubMachine(_) = s.kind {
-                        true
-                    } else {
-                        false
-                    }
-                }) {
+                for state in region.states.iter().filter(|s| matches!(s.kind, FsmStateKind::SubMachine(_))) {
                     let sub = &state.ty;
                     let sub_ty = FsmTypes::new(sub, &fsm.base.fsm_generics);
                     let sub_variant = sub_ty.get_fsm_no_generics_ty();

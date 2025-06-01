@@ -33,7 +33,7 @@ impl<'a, TFsm, TContext, TEvent, TState> FsmEventBuilderState<'a, TFsm, TContext
     ) -> FsmEventBuilderTransitionFull<'b, TFsm, TContext, TEvent, TState, TStateTo> {
         FsmEventBuilderTransitionFull {
             _transition_from: self,
-            _state_to: PhantomData::default(),
+            _state_to: PhantomData,
         }
     }
 }

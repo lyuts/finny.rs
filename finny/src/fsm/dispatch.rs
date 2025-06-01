@@ -53,14 +53,14 @@ where
 
     let mut queue_adapter = FsmEventQueueSub {
         parent: ctx.queue,
-        _parent_fsm: core::marker::PhantomData::<TFsm>::default(),
-        _sub_fsm: core::marker::PhantomData::<TSubMachine>::default(),
+        _parent_fsm: core::marker::PhantomData::<TFsm>,
+        _sub_fsm: core::marker::PhantomData::<TSubMachine>,
     };
 
     let mut timers_adapter = FsmTimersSub {
         parent: ctx.timers,
-        _parent_fsm: core::marker::PhantomData::<TFsm>::default(),
-        _sub_fsm: core::marker::PhantomData::<TSubMachine>::default(),
+        _parent_fsm: core::marker::PhantomData::<TFsm>,
+        _sub_fsm: core::marker::PhantomData::<TSubMachine>,
     };
 
     let mut inspect = inspect_event_ctx.for_sub_machine::<TSubMachine>();

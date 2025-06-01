@@ -286,7 +286,7 @@ pub fn generate_fsm_code(
                 #variants
             }
 
-            impl core::convert::AsRef<str> for #event_enum_ty {
+            impl ::core::convert::AsRef<str> for #event_enum_ty {
                 /// Convert to a shared reference.
                 fn as_ref(&self) -> &'static str {
                     #as_ref_str

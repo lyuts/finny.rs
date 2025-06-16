@@ -3,7 +3,7 @@
 
 #![warn(missing_docs)]
 
-use finny::{finny_fsm, inspect::null::InspectNull, FsmEventQueueArray, FsmFactory, FsmTimersNull};
+use finny::{bundled::derive_more, finny_fsm, inspect::null::InspectNull, FsmEventQueueArray, FsmFactory, FsmTimersNull};
 
 pub fn main() {
     // Since we are passing a C string the final null character is mandatory

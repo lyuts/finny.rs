@@ -4,7 +4,7 @@ use crate::utils::{strip_generics, ty_append};
 pub struct FsmTypes {
     fsm: syn::Type,
     fsm_no_generics: syn::Type,
-    generics: syn::Generics,
+    _generics: syn::Generics,
 }
 
 impl FsmTypes {
@@ -12,7 +12,7 @@ impl FsmTypes {
         Self {
             fsm: ty.clone(),
             fsm_no_generics: strip_generics(ty.clone()),
-            generics: generics.clone(),
+            _generics: generics.clone(),
         }
     }
 

@@ -18,7 +18,7 @@ pub struct FsmFnInput {
 pub struct FsmFnBase {
     pub context_ty: syn::Type,
     pub fsm_ty: syn::Type,
-    pub fsm_info_ty: syn::Type,
+    pub _fsm_info_ty: syn::Type,
     pub builder_ident: proc_macro2::Ident,
     pub fsm_generics: syn::Generics,
 }
@@ -145,7 +145,7 @@ impl FsmFnInput {
         let base = FsmFnBase {
             builder_ident,
             context_ty,
-            fsm_info_ty: crate::utils::ty_append(&fsm_ty, "Info"),
+            _fsm_info_ty: crate::utils::ty_append(&fsm_ty, "Info"),
             fsm_ty,
             fsm_generics: input_fn.sig.generics.clone(),
         };
@@ -180,7 +180,7 @@ pub struct ValidatedFsm {
 #[derive(Debug)]
 pub struct FsmRegion {
     pub region_id: usize,
-    pub initial_state: syn::Type,
+    pub _initial_state: syn::Type,
     pub transitions: Vec<FsmTransition>,
     pub states: Vec<FsmState>,
 }
@@ -193,6 +193,7 @@ pub enum FsmTransitionState {
 
 #[derive(Debug, Clone)]
 pub enum FsmTransitionEvent {
+    #[allow(unused)]
     Stop,
     Start,
     Event(FsmEvent),

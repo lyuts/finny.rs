@@ -181,7 +181,6 @@ impl FsmParser {
                         }
                     }
                 }
-                _ => todo!("unsupported block!"),
             }
         }
 

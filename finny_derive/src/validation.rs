@@ -116,7 +116,7 @@ pub fn create_regions(
         };
 
         regions.push(FsmRegion {
-            initial_state: initial_state.clone(),
+            _initial_state: initial_state.clone(),
             region_id,
             transitions,
             states: states

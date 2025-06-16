@@ -1,9 +1,20 @@
 ## Finny - Hierarchical Finite State Machines for Rust
 
-[![Crates.io][crates-badge]][crates-url]
 [![Documentation](https://docs.rs/finny/badge.svg)](https://docs.rs/finny)
 ![Build](https://github.com/lyuts/finny.rs/workflows/Build/badge.svg)
 ![Dependencies](https://deps.rs/repo/github/lyuts/finny.rs/status.svg)
+
+### Overview
+
+This project is a fork of a great FSM library
+https://github.com/hashmismatch/finny.rs.  Maintenance of the original project
+has been paused. This fork is a hobby project maintained in spare time. While
+there are no significant differences from the upstream (at least at this point),
+this fork makes an attempt at keeping up with the latest dependencies, code
+cleanup, and minor features. There are no specific plans to upstream these
+changes since the original project maintenance is on hold. However, should the
+author of finny revive the project we'd consider upstreaming accumulated
+changes.
 
 ### Features
 * Declarative, builder API with a procedural function macro that generate the dispatcher
@@ -73,6 +84,4 @@ fn main() -> FsmResult<()> {
     Ok(())
 }
 ```
-[crates-badge]: https://img.shields.io/crates/v/finny.svg
-[crates-url]: https://crates.io/crates/finny
 License: MIT OR Apache-2.0

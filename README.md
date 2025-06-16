@@ -3,6 +3,7 @@
 [![Crates.io][crates-badge]][crates-url]
 [![Documentation](https://docs.rs/finny/badge.svg)](https://docs.rs/finny)
 ![Build](https://github.com/lyuts/finny.rs/workflows/Build/badge.svg)
+![Dependencies](https://deps.rs/repo/github/lyuts/finny.rs/status.svg)
 
 ### Features
 * Declarative, builder API with a procedural function macro that generate the dispatcher
@@ -74,5 +75,4 @@ fn main() -> FsmResult<()> {
 ```
 [crates-badge]: https://img.shields.io/crates/v/finny.svg
 [crates-url]: https://crates.io/crates/finny
-
 License: MIT OR Apache-2.0

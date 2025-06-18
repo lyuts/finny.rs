@@ -74,12 +74,14 @@ pub struct SubStateA {
 }
 #[derive(Default)]
 pub struct SubStateB {
+    #[allow(dead_code)]
     value: usize,
 }
 #[derive(Debug, Clone)]
 pub struct SubEvent;
 
 pub struct SubContext {
+    #[allow(dead_code)]
     value: usize,
 }
 
@@ -106,12 +108,14 @@ pub struct SecondSubStateA {
 }
 #[derive(Default)]
 pub struct SecondSubStateB {
+    #[allow(dead_code)]
     value: usize,
 }
 #[derive(Debug, Clone)]
 pub struct SecondSubEvent;
 
 pub struct SecondSubContext {
+    #[allow(dead_code)]
     value: usize,
 }
 

@@ -52,10 +52,12 @@ fn test_generic_ctx() -> FsmResult<()> {
     fsm.start()?;
 
     assert_eq!(124, fsm.val);
+    assert_eq!(some_str, fsm.ref_str);
 
     fsm.dispatch(Event)?;
 
     assert_eq!(224, fsm.val);
+    assert_eq!(some_str, fsm.ref_str);
 
     Ok(())
 }

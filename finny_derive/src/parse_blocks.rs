@@ -6,7 +6,7 @@ use crate::parse::FsmFnBase;
 pub enum FsmBlock {
     MethodCall(FsmBlockMethodCall),
 }
-#[allow(unused)]
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct FsmBlockStruct {}
 

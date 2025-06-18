@@ -13,6 +13,7 @@ pub struct MainContext<X>
 where
     X: Add<usize> + Add<usize, Output = X> + Copy,
 {
+    #[allow(dead_code)]
     some_string: String,
     field: X,
 }
@@ -80,9 +81,7 @@ pub struct SubStateA {
     value: usize,
 }
 #[derive(Default)]
-pub struct SubStateB {
-    value: usize,
-}
+pub struct SubStateB;
 #[derive(Debug, Clone)]
 pub struct SubEvent;
 

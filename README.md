@@ -1,8 +1,8 @@
 ## Finny - Hierarchical Finite State Machines for Rust
 
 [![Documentation](https://docs.rs/finny/badge.svg)](https://docs.rs/finny)
-![Build](https://github.com/lyuts/finny.rs/workflows/Build/badge.svg)
-![Dependencies](https://deps.rs/repo/github/lyuts/finny.rs/status.svg)
+![Build](https://github.com/lyuts/refinny.rs/workflows/Build/badge.svg)
+![Dependencies](https://deps.rs/repo/github/lyuts/refinny.rs/status.svg)
 
 ### Overview
 
